@@ -46,7 +46,7 @@ var (
 
 	vars := mux.Vars(r)
 	uidpath := vars["uid"]
-	uid := strings.TrimSpace(uidpath)
+	uid := strings.TrimSpace(uidpath) 
 
 	Logger.Infof("GetUsersCVS param uid is:[%s]", uid)
 
