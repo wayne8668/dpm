@@ -1,0 +1,1 @@
+cmd /k git push origin master

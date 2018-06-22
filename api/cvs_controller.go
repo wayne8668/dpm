@@ -45,7 +45,7 @@ var (
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
 	vars := mux.Vars(r)
-	uidpath := vars["uid"]
+	uidpath := vars["uid"] //
 	uid := strings.TrimSpace(uidpath) 
 
 	Logger.Infof("GetUsersCVS param uid is:[%s]", uid)
