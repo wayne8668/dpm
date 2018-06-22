@@ -1,0 +1,182 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "the purpose of this application is to provide an application\nthat is using plain go code to define an API\n\nThis should demonstrate all the possible comment annotations\nthat are available to turn go code into a fully compliant swagger 2.0 spec",
+    "title": "DPM API.",
+    "termsOfService": "there are no TOS at this moment, use at your own risk we take no responsibility",
+    "contact": {
+      "name": "xhtian",
+      "email": "kook1001@126.com"
+    },
+    "version": "v1.0"
+  },
+  "host": "localhost:8080",
+  "basePath": "/dpm/api/v1.0",
+  "paths": {
+    "/cvt": {
+      "post": {
+        "description": "Create a new cv template",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "cvt"
+        ],
+        "operationId": "CreateCVT",
+        "parameters": [
+          {
+            "description": "request by",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CVTemplate"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/users": {
+      "get": {
+        "description": "List all users",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "users"
+        ],
+        "operationId": "Index",
+        "responses": {}
+      },
+      "post": {
+        "description": "Create a new user",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "users"
+        ],
+        "operationId": "CreateUser",
+        "parameters": [
+          {
+            "description": "request by",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    }
+  },
+  "definitions": {
+    "CVTemplate": {
+      "description": "cv template struct",
+      "type": "object",
+      "title": "CVTemplate",
+      "properties": {
+        "cvt_color": {
+          "description": "模板颜色",
+          "type": "string",
+          "x-go-name": "CVTColor"
+        },
+        "cvt_csspath": {
+          "description": "模板css路径",
+          "type": "string",
+          "x-go-name": "CVTCssPath"
+        },
+        "cvt_fmt": {
+          "description": "支持格式",
+          "type": "string",
+          "x-go-name": "CVTFmt"
+        },
+        "cvt_imgpath": {
+          "description": "模板图片路径",
+          "type": "string",
+          "x-go-name": "CVTImgPath"
+        },
+        "cvt_language": {
+          "description": "模板语言",
+          "type": "string",
+          "x-go-name": "CVTLanguage"
+        },
+        "cvt_name": {
+          "description": "模板名称",
+          "type": "string",
+          "x-go-name": "CVTName"
+        },
+        "cvt_no": {
+          "description": "模板编号",
+          "type": "string",
+          "x-go-name": "CVTNo"
+        },
+        "cvt_size": {
+          "description": "模板尺寸",
+          "type": "string",
+          "x-go-name": "CVTSize"
+        }
+      },
+      "x-go-package": "dpm/models"
+    },
+    "JSONTime": {
+      "type": "string",
+      "format": "date-time",
+      "x-go-package": "dpm/common"
+    },
+    "User": {
+      "description": "User Entity",
+      "type": "object",
+      "title": "User",
+      "properties": {
+        "create_time": {
+          "$ref": "#/definitions/JSONTime"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "Id"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "pwd": {
+          "type": "string",
+          "x-go-name": "Pwd"
+        }
+      },
+      "x-go-package": "dpm/models"
+    }
+  },
+  "responses": {
+    "ResponseMsg": {
+      "description": "Response struct",
+      "schema": {
+        "type": "object"
+      },
+      "headers": {
+        "rsp_code": {
+          "type": "integer",
+          "format": "int64",
+          "description": "返回码"
+        },
+        "rsp_msg": {
+          "description": "返回信息"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1 @@
+cmd /k swagger generate spec -m -o D:/node_app/dist/swagger.json
