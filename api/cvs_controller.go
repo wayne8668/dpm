@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	"dpm/models"
 	"dpm/repositories"
-	"fmt"
 	"net/http"
 	// "github.com/goinggo/mapstructure"
 )
@@ -64,17 +63,56 @@ var (
 	jsonResponseOK(w, &cvs)
 }
 
-/*
-* 创建简历
- */
-func CreateCV(w http.ResponseWriter, r *http.Request) {
+//新增简历
+func CreateUsersCVS(w http.ResponseWriter, r *http.Request) {
+		// swagger:operation POST /cvs/{uid} cvs CreateUsersCVS
+	//
+	//新增简历
+	//
+	// create User's CVS
+	//
+	// ---
+	// Consumes:
+	// - application/json
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: uid
+	//   in: path
+	//   description: cvs of user's id
+	//   required: true
+	// responses:
+	//   '200':
+	//     description: "创建用户简历"
+	//     schema:
+	//       "$ref": "#/definitions/CurriculumVitae"
+	//   '400':
+	//     description: "{\"rsp_msg\":errro msg} - Bad Request Error"
+	//   '401':
+	//     description: "{\"rsp_msg\":errro msg} - Unauthorized Error"
+	//   '500':
+	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
+
+
+	vars := mux.Vars(r)
+	uidpath := vars["uid"]
+	uid := strings.TrimSpace(uidpath)
+
+	Logger.Infof("GetUsersCVS param uid is:[%s]", uid)
+
+	if uid =="" {
+		panic(common.ErrBadRequest("Bad Request param in path:{uid} is null"))
+	}
+
 	var cv models.CurriculumVitae
 	unmarshal2Object(w, r, &cv)
-	fmt.Println(cv)
-	fmt.Println(cv.Height)
-	rm := make(map[string]interface{})
-	cvsRepositories.CreateCV(cv)
-	jsonResponse(w, http.StatusOK, rm)
+
+	nr,err := cvsRepositories.CreateUsersCVS(cv,uid)
+
+	if err != nil {
+		panic(common.ErrTrace(err))
+	}
+	jsonResponseOK(w, &nr)
 }
 
 /*

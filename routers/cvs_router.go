@@ -8,9 +8,9 @@ var (
 	cvRouter = ControllerRouter{
 		Route{
 			Name:        "cvs_create",
-			Methods:     []string{"POST"},
-			Pattern:     prefixion + "/cvs",
-			HandlerFunc: api.CreateCV,
+			Methods:     []string{"GET", "OPTIONS"},
+			Pattern:     prefixion + "/cvs/{uid}",
+			HandlerFunc: api.CreateUsersCVS,
 		},
 		Route{
 			Name:        "cvs_create_index",

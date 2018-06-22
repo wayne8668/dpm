@@ -29,7 +29,6 @@ const (
 	CVMTYPE_HONORS = "cvmtype_honors"
 )
 
-//简历
 type CurriculumVitae struct {
 	//简历Id
 	CVId string `json:"cv_id"`
