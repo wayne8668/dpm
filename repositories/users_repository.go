@@ -61,7 +61,7 @@ func (this *UsersRepository) IsExist(u models.User) (isExist bool, err error) {
 
 	conn := GetConn()
 	defer conn.Close()
-	sqlStr := `match (n:USER) where n.name={name} return count(*)`
+	sqlStr := `match (n:USER) where n.name={name} return n`
 
 	params := make(map[string]interface{})
 	params["name"] = u.Name
