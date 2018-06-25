@@ -14,11 +14,11 @@ var (
 	cvsRepositories = repositories.NewCVSRepository()
 )
 
-//我的简历
+//返回指定用户的所有简历
  func GetUsersCVS(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /cvs/{uid} cvs GetUsersCVS
+	// swagger:operation GET /cvs/users/{uid} cvs GetUsersCVS
 	//
-	//返回我的简历
+	//返回指定用户的所有简历
 	//
 	// Return User's CVS
 	//
@@ -65,7 +65,7 @@ var (
 
 //新增简历
 func CreateUsersCVS(w http.ResponseWriter, r *http.Request) {
-		// swagger:operation POST /cvs/{uid} cvs CreateUsersCVS
+	// swagger:operation POST /cvs/{uid} cvs CreateUsersCVS
 	//
 	//新增简历
 	//
@@ -115,10 +115,13 @@ func CreateUsersCVS(w http.ResponseWriter, r *http.Request) {
 	jsonResponseOK(w, &nr)
 }
 
-/*
-* 根据模板创建简历
- */
-func CreateCVForTempId(w http.ResponseWriter, r *http.Request) {
+//修改简历模板
+func UpdateCVTemp(w http.ResponseWriter, r *http.Request) {
+
+}
+
+//新增简历模板
+func CreateCVTemp(w http.ResponseWriter, r *http.Request) {
 
 }
 
