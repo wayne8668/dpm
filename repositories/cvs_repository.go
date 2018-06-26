@@ -63,7 +63,7 @@ func (this *cvsRepository) GetUsersCVS(uid string) (r []models.CurriculumVitae, 
 	return r, err
 }
 
-func (this *cvsRepository) CreateUsersCVS(md models.CurriculumVitae,uid string) (numResult int, err error) {
+func (this *cvsRepository) CreateUsersCVS(md models.CurriculumVitae, uid string) (numResult int, err error) {
 
 	conn := GetConn()
 

@@ -4,16 +4,10 @@ import (
 	"dpm/common"
 )
 
-// CVTemplate
-//
-// cv template struct
-//
-// swagger:model CVTemplate
+//简历模板
 type CVTemplate struct {
 	
 	// 模板id
-    //
-    //swagger:ignore
 	CVTId         string          `json:"cvt_id"`
 	//模板编号
 	CVTNo         string          `json:"cvt_no"`
@@ -32,9 +26,7 @@ type CVTemplate struct {
 	//模板css路径
 	CVTCssPath    string          `json:"cvt_csspath"`
 	//创建时间
-	//swagger:ignore
 	CVTCreateTime common.JSONTime `json:"cvt_createtime"`
 	//修改时间
-	//swagger:ignore
 	CVTUpdateTime common.JSONTime `json:"cvt_updatetime"`
 }

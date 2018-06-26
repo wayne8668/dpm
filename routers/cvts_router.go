@@ -18,5 +18,11 @@ var (
 			Pattern:     prefixion + "/cvts/{id}",
 			HandlerFunc: api.UpdateCVT,
 		},
+		Route{
+			Name:        "cvts_all_page",
+			Methods:     []string{"GET", "OPTIONS"},
+			Pattern:     prefixion + "/cvts",
+			HandlerFunc: api.GetAllCVTS,
+		},
 	}
 )
