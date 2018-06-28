@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strconv"
 	"github.com/gorilla/context"
 	"dpm/common"
 	"strings"
@@ -33,6 +34,14 @@ var (
 	//   in: query
 	//   description: cvs of user's id
 	//   required: true
+	// - name: limit
+	//   in: query
+	//   description: per page limit
+	//   required: true
+	// - name: page
+	//   in: query
+	//   description: page number
+	//   required: true
 	// responses:
 	//   '200':
 	//     description: "返回用户简历"
@@ -47,6 +56,11 @@ var (
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
+
+	ls := ParseQueryGet(r,"limit")
+	pgs := ParseQueryGet(r,"page")
+	Logger.Infof("ls:[%s];pgs:[%s]", ls,pgs)
+
 	uid := ParseQueryGet(r,"uid")
 	uid = strings.TrimSpace(uid)
 
@@ -56,7 +70,16 @@ var (
 		panic(common.ErrBadRequest("Bad Request param in query:{uid} is null"))
 	}
 
-	cvs, err := cvsRepositories.GetUsersCVS(uid)
+	l, _ := strconv.ParseInt(ls, 10, 64)
+	pg, _ := strconv.ParseInt(pgs, 10, 64)
+
+	p, err := common.NewPageable(l, pg)
+
+	if err != nil {
+		panic(common.ErrTrace(err))
+	}
+
+	cvs, err := cvsRepositories.GetUsersCVS(p,uid)
 
 	if err != nil {
 		panic(common.ErrTrace(err))

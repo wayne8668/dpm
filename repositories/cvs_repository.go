@@ -52,7 +52,7 @@ func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (numResult
 				cv_createtime:{cv_createtime},
 				cv_updatetime:{cv_updatetime}}) - [:include_cvt] -> (cvt) `
 
-	now :=time.Now()
+	now := time.Now()
 	nowNano := time.Now().UnixNano()
 	nowFmt := now.Format("060102")
 
@@ -74,28 +74,57 @@ func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (numResult
 }
 
 //返回用户的所有简历
-func (this *cvsRepository) GetUsersCVS(uid string) (r []models.CurriculumVitae, err error) {
+func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pageable, error) {
 	conn := GetConn()
 	defer conn.Close()
 
-	sqlStr := `MATCH (u:user) - [:has_cv] ->(cv:curriculum_vitae)
-		where u.uid = {uid} 
-		RETURN cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime
-		order by cv.cv_updatetime desc`
+	sqlStrCount := `match (u:user) - [:has_cv] ->(cv:curriculum_vitae)
+	where u.uid = {uid} 
+	return count(*)`
 
 	params := make(map[string]interface{})
 	params["uid"] = uid
 
+	rows, err := conn.QueryNeo(sqlStrCount, params)
+	defer rows.Close()
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return p, err
+	}
+
+	nextDate, _, err := rows.NextNeo()
+	rows.Close()
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return p, err
+	}
+
+	count := common.NilParseInt64(nextDate[0])
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return p, err
+	}
+
+	Logger.Info("row count is:", count)
+	p.SetTotalElements(count)
+
+	sqlStr := `match (u:user) - [:has_cv] ->(cv:curriculum_vitae)
+		where u.uid = {uid} 
+		return cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime
+		order by cv.cv_updatetime desc 
+		skip {offset} limit {limit}`
+
+	params["limit"] = p.PageSize
+	params["offset"] = p.GetOffSet()
+
 	data, _, _, err := conn.QueryNeoAll(sqlStr, params)
 
 	if err := common.ErrInternalServer(err); err != nil {
-		return r, err
+		return p, err
 	}
 
-	r = make([]models.CurriculumVitae, len(data))
-
-	for idx, row := range data {
-		r[idx] = models.CurriculumVitae{
+	for _, row := range data {
+		m := &models.CurriculumVitae{
 			CVId:             common.NilParseString(row[0]),
 			CVName:           common.NilParseString(row[1]),
 			CViewPwd:         common.NilParseString(row[2]),
@@ -104,7 +133,8 @@ func (this *cvsRepository) GetUsersCVS(uid string) (r []models.CurriculumVitae, 
 			CVCreateTime:     common.NilParseJSONTime(row[5]),
 			CVUpdateTime:     common.NilParseJSONTime(row[6]),
 		}
+		p.AddContent(m)
 	}
 	Logger.Info("GetUsersCVS method return")
-	return r, err
+	return p, err
 }
