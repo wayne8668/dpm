@@ -3,8 +3,7 @@ package repositories
 import (
 	"dpm/common"
 	"dpm/models"
-	"encoding/json"
-	"fmt"
+	"time"
 )
 
 type cvsRepository struct{}
@@ -18,19 +17,71 @@ func NewCVSRepository() *cvsRepository {
 	return cvr
 }
 
-//返回用户简历
+//设置简历模板
+func (this *cvsRepository) ReSetCVTemp(uid string, cvid string, cvtid string) (numResult int, err error) {
+	conn := GetConn()
+	defer conn.Close()
+	sqlStr := `match (u:USER) - [:has_cv] ->(cv:curriculum_vitae) - [r1:include_cvt] -> (),(cvt:cv_template) 
+			where u.id = {uid} and cv.cv_id = {cvid} and cvt.cvt_id = {cvtid}
+			create (cv) - [:include_cvt] -> (cvt) 
+			delete r1`
+
+	params := make(map[string]interface{})
+	params["uid"] = uid
+	params["cvtid"] = cvtid
+	params["cvid"] = cvid
+
+	_, err = conn.ExecNeo(sqlStr, params)
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return numResult, err
+	}
+
+	return numResult, err
+}
+
+//新增简历
+func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (numResult int, err error) {
+	conn := GetConn()
+	defer conn.Close()
+	sqlStr := `match (u:user),(cvt:cv_template) 
+			where u.uid = {uid} and cvt.cvt_id = {cvtid}
+			create (u) - [:has_cv] ->(cv:curriculum_vitae{
+				cv_id:{cv_id},
+				cv_name:{cv_name},
+				cv_createtime:{cv_createtime},
+				cv_updatetime:{cv_updatetime}}) - [:include_cvt] -> (cvt) `
+
+	now :=time.Now()
+	nowNano := time.Now().UnixNano()
+	nowFmt := now.Format("060102")
+
+	params := make(map[string]interface{})
+	params["uid"] = uid
+	params["cvtid"] = cvtid
+	params["cv_id"] = NewUUID()
+	params["cv_name"] = "我的简历-" + nowFmt
+	params["cv_createtime"] = nowNano
+	params["cv_updatetime"] = nowNano
+
+	_, err = conn.ExecNeo(sqlStr, params)
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return numResult, err
+	}
+
+	return 1, err
+}
+
+//返回用户的所有简历
 func (this *cvsRepository) GetUsersCVS(uid string) (r []models.CurriculumVitae, err error) {
 	conn := GetConn()
 	defer conn.Close()
 
-	sqlStr := `MATCH (n:curriculum_vitae) 
-		where n.uid = {uid} 
-		RETURN n.cv_id,
-			n.cv_name,
-			n.custom_domain_name,
-			n.cvisibili_type,
-			n.cv_createtime,
-			n.cv_updatetime`
+	sqlStr := `MATCH (u:user) - [:has_cv] ->(cv:curriculum_vitae)
+		where u.uid = {uid} 
+		RETURN cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime
+		order by cv.cv_updatetime desc`
 
 	params := make(map[string]interface{})
 	params["uid"] = uid
@@ -41,62 +92,19 @@ func (this *cvsRepository) GetUsersCVS(uid string) (r []models.CurriculumVitae, 
 		return r, err
 	}
 
+	r = make([]models.CurriculumVitae, len(data))
+
 	for idx, row := range data {
-		ct, err := common.UMStr2JSONTime(row[4].(string))
-		if err := common.ErrInternalServer(err); err != nil {
-			return r, err
-		}
-		ut, err := common.UMStr2JSONTime(row[5].(string))
-		if err := common.ErrInternalServer(err); err != nil {
-			return r, err
-		}
 		r[idx] = models.CurriculumVitae{
-			CVId:             row[0].(string),
-			CVName:           row[1].(string),
-			CustomDomainName: row[2].(string),
-			CVisibiliType:    row[3].(int),
-			CVCreateTime:     ct,
-			CVUpdateTime:     ut,
+			CVId:             common.NilParseString(row[0]),
+			CVName:           common.NilParseString(row[1]),
+			CViewPwd:         common.NilParseString(row[2]),
+			CustomDomainName: common.NilParseString(row[3]),
+			CVisibiliType:    common.NilParseInt(row[4]),
+			CVCreateTime:     common.NilParseJSONTime(row[5]),
+			CVUpdateTime:     common.NilParseJSONTime(row[6]),
 		}
 	}
 	Logger.Info("GetUsersCVS method return")
 	return r, err
-}
-
-func (this *cvsRepository) CreateUsersCVS(md models.CurriculumVitae, uid string) (numResult int, err error) {
-
-	conn := GetConn()
-
-	tx, err := conn.Begin()
-	///////////////////////
-	q1, m1 := createCVRoot(md)
-
-	stmt, err := conn.PreparePipeline(q1)
-
-	pipelineResults, err := stmt.ExecPipeline(m1)
-
-	fmt.Println(pipelineResults)
-
-	tx.Commit()
-	return 0, nil
-}
-
-func createCVRoot(m models.CurriculumVitae) (string, map[string]interface{}) {
-	sqlCreateCVRoot := `
-		create (cv:curriculum_vitae {//新增简历
-			cv_id:{cvid}, //简历Id
-			cv_name:{cvname}, //简历名称
-			cview_pwd:{desc},//查看密码
-			custom_domain_name:{customdomainname},//自定义域名
-			cvisibili_type:{cvisibilitype},//可见类型
-			cv_createtime:{cvcreatetime},//创建时间
-			cv_updatetime:{cvupdatetime}//更新时间
-			})`
-	return sqlCreateCVRoot, nil
-}
-
-func Print() {
-	cv := models.NewCurriculumVitae()
-	b, _ := json.Marshal(cv)
-	fmt.Printf("%s\n", b)
 }

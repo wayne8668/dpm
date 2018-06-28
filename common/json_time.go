@@ -9,7 +9,7 @@ type (
 )
 
 const (
-	timeFormart = "2006-01-02 15:04:05"
+	timeFormart = "2006-01-02 15:04:05.999"
 )
 
 func (this *JSONTime) UnmarshalJSON(data []byte) (err error) {
@@ -26,8 +26,12 @@ func (this JSONTime) MarshalJSON() ([]byte, error) {
 	return b, nil
 }
 
+func UMInt2JSONTime(st int64) JSONTime {
+	return JSONTime(time.Unix(0,st))
+}
+
 func UMStr2JSONTime(st string) (JSONTime, error) {
-	t, err := time.ParseInLocation(`"`+timeFormart+`"`, st, time.Local)
+	t, err := time.ParseInLocation(timeFormart, st, time.Local)
 	return JSONTime(t), err
 }
 

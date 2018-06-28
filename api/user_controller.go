@@ -58,7 +58,7 @@ func Loggin(w http.ResponseWriter, r *http.Request) {
 		ut := &common.UserToken{
 			Name: u.Name,
 			Pwd:  u.Pwd,
-			Id:   udb.Id,
+			Id:   udb.UId,
 		}
 		if token, err := common.CreateToken(ut); err != nil {
 			panic(common.ErrTrace(err))

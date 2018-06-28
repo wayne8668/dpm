@@ -3,6 +3,7 @@ package repositories
 import (
 	"dpm/common"
 	"dpm/models"
+	"time"
 	// "github.com/goinggo/mapstructure"
 )
 
@@ -28,7 +29,7 @@ func checkErr(err error) error {
 func (this *UsersRepository) GetUserForAuth(u models.User) (udb *models.User, err error) {
 	conn := GetConn()
 	defer conn.Close()
-	sqlStr := `match (n:USER) where n.name={name} and n.pwd={pwd} return n.id,n.name,n.pwd`
+	sqlStr := `match (n:user) where n.name={name} and n.pwd={pwd} return n.uid,n.name,n.pwd`
 
 	params := make(map[string]interface{})
 	params["name"] = u.Name
@@ -47,9 +48,9 @@ func (this *UsersRepository) GetUserForAuth(u models.User) (udb *models.User, er
 	results := make([]*models.User, len(data))
 	for idx, row := range data {
 		results[idx] = &models.User{
-			Id:   row[0].(string),
-			Name: row[1].(string),
-			Pwd:  row[2].(string),
+			UId:  common.NilParseString(row[0]),
+			Name: common.NilParseString(row[1]),
+			Pwd:  common.NilParseString(row[2]),
 		}
 	}
 	udb = results[0]
@@ -61,7 +62,7 @@ func (this *UsersRepository) IsExist(u models.User) (isExist bool, err error) {
 
 	conn := GetConn()
 	defer conn.Close()
-	sqlStr := `match (n:USER) where n.name={name} return n`
+	sqlStr := `match (n:user) where n.name={name} return n`
 
 	params := make(map[string]interface{})
 	params["name"] = u.Name
@@ -92,13 +93,13 @@ func (this *UsersRepository) CreateUser(u models.User) (numResult int64, err err
 		return numResult, err
 	}
 
-	connStr := "CREATE (n:USER {id:{id}, name:{name},pwd:{pwd},create_time:{create_time}})"
+	connStr := "CREATE (n:user {uid:{uid}, name:{name},pwd:{pwd},create_time:{create_time}})"
 
 	m := map[string]interface{}{
-		"id":          NewUUID(),
+		"uid":         NewUUID(),
 		"name":        u.Name,
 		"pwd":         u.Pwd,
-		"create_time": common.NowStringFormat(),
+		"create_time": time.Now().UnixNano(),
 	}
 
 	conn := GetConn()
@@ -123,7 +124,7 @@ func (this *UsersRepository) CreateUser(u models.User) (numResult int64, err err
 func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, error) {
 	conn := GetConn()
 	defer conn.Close()
-	sqlStrCount := `MATCH (n:USER) RETURN count(*)`
+	sqlStrCount := `MATCH (n:user) RETURN count(*)`
 
 	rows, err := conn.QueryNeo(sqlStrCount, nil)
 	defer rows.Close()
@@ -148,7 +149,7 @@ func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, er
 	Logger.Info("row count is:", count)
 	p.SetTotalElements(count)
 
-	sqlStr := `MATCH (n:USER) RETURN n.id,n.name,n.pwd SKIP {offset} LIMIT {limit}`
+	sqlStr := `MATCH (n:user) RETURN n.uid,n.name,n.pwd,n.create_time SKIP {offset} LIMIT {limit}`
 
 	params := make(map[string]interface{})
 	params["limit"] = p.PageSize
@@ -164,9 +165,10 @@ func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, er
 
 	for _, row := range data {
 		m := &models.User{
-			Id:   row[0].(string),
-			Name: row[1].(string),
-			Pwd:  row[2].(string),
+			UId:        common.NilParseString(row[0]),
+			Name:       common.NilParseString(row[1]),
+			Pwd:        common.NilParseString(row[2]),
+			CreateTime: common.NilParseJSONTime(row[3]),
 		}
 		p.AddContent(m)
 	}

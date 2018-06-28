@@ -3,6 +3,7 @@ package repositories
 import (
 	"dpm/common"
 	"dpm/models"
+	"time"
 )
 
 type cvtRepository struct{}
@@ -14,6 +15,42 @@ var (
 //单例构造函数
 func NewCVTRepository() *cvtRepository {
 	return cvtr
+}
+
+//判断模板是否存在
+func (this *cvtRepository) IsExist(cvtid string) (ok bool, err error) {
+	conn := GetConn()
+	defer conn.Close()
+
+	sqlStr := `
+		MATCH (n:cv_template) 
+		where n.cvt_id={cvt_id} return count(*)`
+
+	// now := common.NowStringFormat()
+
+	params := make(map[string]interface{})
+	params["cvt_id"] = cvtid
+
+	stmt, err := conn.PrepareNeo(sqlStr)
+	defer stmt.Close()
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return ok, err
+	}
+	rows, err := stmt.QueryNeo(params)
+	defer rows.Close()
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return ok, err
+	}
+	data, _, err := rows.NextNeo()
+	if err := common.ErrInternalServer(err); err != nil {
+		return ok, err
+	}
+	if data[0].(int64) != 0 {
+		ok = true
+	}
+	return ok, err
 }
 
 //新增简历模板
@@ -40,7 +77,7 @@ func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) (numResult 
 	}
 	defer stmt.Close()
 
-	now := common.NowStringFormat()
+	now := time.Now().UnixNano()
 
 	params := make(map[string]interface{})
 	params["cvt_id"] = NewUUID()
@@ -83,7 +120,7 @@ func (this *cvtRepository) UpdateCVTemplate(md models.CVTemplate) error {
 		n.cvt_csspath = {cvt_csspath},
 		n.cvt_updatetime = {cvt_updatetime}`
 
-	now := common.NowStringFormat()
+	now := time.Now().UnixNano()
 
 	params := make(map[string]interface{})
 	params["cvt_id"] = md.CVTId
@@ -168,20 +205,18 @@ func (this *cvtRepository) GetAllCVTS(p common.Pageable) (common.Pageable, error
 	// results := make([]*models.User, len(data))
 
 	for _, row := range data {
-		c, _ := common.UMStr2JSONTime(row[9].(string))
-		u, _ := common.UMStr2JSONTime(row[10].(string))
 		m := &models.CVTemplate{
-			CVTId:         row[0].(string),
-			CVTNo:         row[1].(string),
-			CVTName:       row[2].(string),
-			CVTFmt:        row[3].(string),
-			CVTSize:       row[4].(string),
-			CVTLanguage:   row[5].(string),
-			CVTColor:      row[6].(string),
-			CVTImgPath:    row[7].(string),
-			CVTCssPath:    row[8].(string),
-			CVTCreateTime: c,
-			CVTUpdateTime: u,
+			CVTId:         common.NilParseString(row[0]),
+			CVTNo:         common.NilParseString(row[1]),
+			CVTName:       common.NilParseString(row[2]),
+			CVTFmt:        common.NilParseString(row[3]),
+			CVTSize:       common.NilParseString(row[4]),
+			CVTLanguage:   common.NilParseString(row[5]),
+			CVTColor:      common.NilParseString(row[6]),
+			CVTImgPath:    common.NilParseString(row[7]),
+			CVTCssPath:    common.NilParseString(row[8]),
+			CVTCreateTime: common.NilParseJSONTime(row[9]),
+			CVTUpdateTime: common.NilParseJSONTime(row[10]),
 		}
 		p.AddContent(m)
 	}

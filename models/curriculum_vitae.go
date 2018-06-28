@@ -33,51 +33,51 @@ type CurriculumVitae struct {
 	//简历Id
 	CVId string `json:"cv_id"`
 	//简历名称
-	CVName string `json:"cv_name"`
+	CVName string `json:"cv_name,omitempty"`
 	//查看密码
-	CViewPwd string `json:"cview_pwd"`
+	CViewPwd string `json:"cview_pwd,omitempty"`
 	//自定义域名
-	CustomDomainName string `json:"custom_domainname"`
+	CustomDomainName string `json:"custom_domainname,omitempty"`
 	//可见类型
-	CVisibiliType int `json:"cvisibili_type"`
+	CVisibiliType int `json:"cvisibili_type,omitempty"`
 	//创建时间
-	CVCreateTime common.JSONTime `json:"cv_createtime"`
+	CVCreateTime common.JSONTime `json:"cv_createtime,omitempty"`
 	//更新时间
-	CVUpdateTime common.JSONTime `json:"cv_updatetime"`
+	CVUpdateTime common.JSONTime `json:"cv_updatetime,omitempty"`
 	//简历模板
-	CVTemplate `json:"cv_template"`
+	*CVTemplate `json:"cv_template,omitempty"`
 	//基本信息模块
-	*BasicInfoCVM `json:"basicinfo_cvm"`
+	*BasicInfoCVM `json:"basicinfo_cvm,omitempty"`
 	//头像模块
-	*HeadPortraitCVM `json:"headportrait_cvm"`
+	*HeadPortraitCVM `json:"headportrait_cvm,omitempty"`
 	//求职意向模块
-	*JobIntensionCVM `json:"jobintension_cvm"`
+	*JobIntensionCVM `json:"jobintension_cvm,omitempty"`
 	//工作经历模块
-	*WorkExperienceCVM `json:"workexperience_cvm"`
+	*WorkExperienceCVM `json:"workexperience_cvm,omitempty"`
 	//志愿者经历模块
-	*VolunteerExperienceCVM `json:"volunteerexperience_cvm"`
+	*VolunteerExperienceCVM `json:"volunteerexperience_cvm,omitempty"`
 	//实习生经历模块
-	*TraineeExperienceCVM `json:"traineeexperience_cvm"`
+	*TraineeExperienceCVM `json:"traineeexperience_cvm,omitempty"`
 	//教育经历模块
-	*EducateExperienceCVM `json:"educateexperience_cvm"`
+	*EducateExperienceCVM `json:"educateexperience_cvm,omitempty"`
 	//项目经历
-	*ProjectExperienceCVM `json:"projectexperience_cvm"`
+	*ProjectExperienceCVM `json:"projectexperience_cvm,omitempty"`
 	//自我评价模块
-	*SelfEvaluationCVM `json:"selfevaluation_cvm"`
+	*SelfEvaluationCVM `json:"selfevaluation_cvm,omitempty"`
 	//荣誉奖项模块
-	*HonorsCVM `json:"honors_cvm"`
+	*HonorsCVM `json:"honors_cvm,omitempty"`
 	//自荐信模块
-	*SelfRecomdLetterCVM `json:"selfrecomdletter_cvm"`
+	*SelfRecomdLetterCVM `json:"selfrecomdletter_cvm,omitempty"`
 	//作品展示模块
-	*WorksShowCVM `json:"worksshow_cvm"`
+	*WorksShowCVM `json:"worksshow_cvm,omitempty"`
 	//兴趣爱好模块
-	*InterestCVM `json:"interest_cvm"`
+	*InterestCVM `json:"interest_cvm,omitempty"`
 	//技能特长模块
-	*SpecialityCVM `json:"speciality_cvm"`
+	*SpecialityCVM `json:"speciality_cvm,omitempty"`
 	//自定义描述模块
-	CustomDescribeCVMs []CustomDescribeCVM `json:"customdescribe_cvms"`
+	CustomDescribeCVMs []CustomDescribeCVM `json:"customdescribe_cvms,omitempty"`
 	//自定义经验模块
-	CustomExperienceCVMs []CustomExperienceCVM `json:"customexperience_cvms"`
+	CustomExperienceCVMs []CustomExperienceCVM `json:"customexperience_cvms,omitempty"`
 }
 
 //简历模块
