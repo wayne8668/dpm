@@ -3,6 +3,7 @@ package repositories
 import (
 	"dpm/common"
 	"dpm/models"
+	"fmt"
 	"time"
 )
 
@@ -74,7 +75,7 @@ func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (numResult
 }
 
 //返回用户的所有简历
-func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pageable, error) {
+func (this *cvsRepository) GetUsersCVSOld(p common.Pageable, uid string) (common.Pageable, error) {
 	conn := GetConn()
 	defer conn.Close()
 
@@ -136,5 +137,56 @@ func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pa
 		p.AddContent(m)
 	}
 	Logger.Info("GetUsersCVS method return")
+	return p, err
+}
+
+func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pageable, error) {
+	var err error = nil
+
+	params := make(map[string]interface{})
+	params["uid"] = uid
+
+	var count int64
+
+	c := NewCypher().
+		Match("(u:user) - [:has_cv] -> (cv:curriculum_vitae)").
+		Where("u.uid = {uid}").
+		Return("count(*)")
+
+	NewNeo4GoTemplate(c).QueryNeoNextOne(params, func(row []interface{}) {
+		count = common.NilParseInt64(row[0])
+	})
+
+	fmt.Println("=======================", c.String())
+
+	Logger.Info("row count is:", count)
+	p.SetTotalElements(count)
+
+	sqlStr := NewCypher().
+		Match("(u:user) - [:has_cv] ->(cv:curriculum_vitae)").
+		Where("u.uid = {uid}").
+		Return("cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime").
+		OrderBy("order by cv.cv_updatetime desc").
+		Skip("{offset}").
+		Limit("{limit}")
+
+	params["limit"] = p.PageSize
+	params["offset"] = p.GetOffSet()
+
+	NewNeo4GoTemplate(sqlStr).QueryNeoAll(params, func(row []interface{}) {
+		m := &models.CurriculumVitae{
+			CVId:             common.NilParseString(row[0]),
+			CVName:           common.NilParseString(row[1]),
+			CViewPwd:         common.NilParseString(row[2]),
+			CustomDomainName: common.NilParseString(row[3]),
+			CVisibiliType:    common.NilParseInt(row[4]),
+			CVCreateTime:     common.NilParseJSONTime(row[5]),
+			CVUpdateTime:     common.NilParseJSONTime(row[6]),
+		}
+		p.AddContent(m)
+	})
+
+	Logger.Info("GetUsersCVS method return")
+
 	return p, err
 }
