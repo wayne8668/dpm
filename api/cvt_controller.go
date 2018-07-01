@@ -37,7 +37,7 @@ func CreateCVT(w http.ResponseWriter, r *http.Request) {
 	//    "$ref": "#/definitions/CreateCVTParam"
 	// responses:
 	//   '200':
-	//     description: "{\"numResult\":numResult}"
+	//     description: "{\"rsp_msg\":ok}"
 	//   '400':
 	//     description: "{\"rsp_msg\":errro msg} - Bad Request Error"
 	//   '401':
@@ -50,13 +50,13 @@ func CreateCVT(w http.ResponseWriter, r *http.Request) {
 	Logger.Info("CreateCVT method is invorked....")
 	var cvt models.CVTemplate
 	unmarshal2Object(w, r, &cvt)
-	numResult, err := cvtsRepository.CreateNewCVTemplate(cvt)
+	err := cvtsRepository.CreateNewCVTemplate(cvt)
 	if err != nil {
 		panic(common.ErrTrace(err))
 	}
 	//response
 	rm := map[string]interface{}{
-		"numResult": numResult,
+		"rsp_msg": "ok",
 	}
 
 	jsonResponseOK(w, rm)
@@ -103,7 +103,7 @@ func UpdateCVT(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	cvtId := vars["id"]
 	if cvtId == "" {
-		panic(common.ErrBadRequest("the cvt id is required"))
+		panic(common.ErrBadRequest("the cvt id is required"))4
 	}
 	var cvt models.CVTemplate
 	cvt.CVTId = cvtId

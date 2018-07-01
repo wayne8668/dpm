@@ -55,6 +55,9 @@ func ErrBadRequest(format string) error {
 	return ae
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 func ErrAnnotatef(code int, other error, format string, args ...interface{}) error {
 	cause := other
 	if ae, ok := other.(*AppError); ok {

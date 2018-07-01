@@ -18,64 +18,32 @@ func NewCVTRepository() *cvtRepository {
 }
 
 //判断模板是否存在
-func (this *cvtRepository) IsExist(cvtid string) (ok bool, err error) {
-	conn := GetConn()
-	defer conn.Close()
-
-	sqlStr := `
-		MATCH (n:cv_template) 
-		where n.cvt_id={cvt_id} return count(*)`
-
-	// now := common.NowStringFormat()
+func (this *cvtRepository) IsExist(cvtid string) (bool, error) {
 
 	params := make(map[string]interface{})
 	params["cvt_id"] = cvtid
 
-	stmt, err := conn.PrepareNeo(sqlStr)
-	defer stmt.Close()
+	c := NewCypher().Match("(n:cv_template)").Where("n.cvt_id={cvt_id}").Return("count(*)").Params(params)
+
+	var count int64
+
+	err := QueryNeo(func(row []interface{}) {
+		count = common.NilParseInt64(row[0])
+	}, c)
 
 	if err := common.ErrInternalServer(err); err != nil {
-		return ok, err
+		return false, err
 	}
-	rows, err := stmt.QueryNeo(params)
-	defer rows.Close()
 
-	if err := common.ErrInternalServer(err); err != nil {
-		return ok, err
+	if count == 0 {
+		return false, nil
 	}
-	data, _, err := rows.NextNeo()
-	if err := common.ErrInternalServer(err); err != nil {
-		return ok, err
-	}
-	if data[0].(int64) != 0 {
-		ok = true
-	}
-	return ok, err
+
+	return true, nil
 }
 
 //新增简历模板
-func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) (numResult int64, err error) {
-	conn := GetConn()
-	defer conn.Close()
-	sqlStr := `
-		CREATE (p:cv_template {
-			cvt_id:{cvt_id}, 
-			cvt_no:{cvt_no}, 
-			cvt_name:{cvt_name},
-			cvt_fmt:{cvt_fmt}, 
-			cvt_size:{cvt_size}, 
-			cvt_language:{cvt_language}, 
-			cvt_color:{cvt_color}, 
-			cvt_imgpath:{cvt_imgpath}, 
-			cvt_csspath:{cvt_csspath},
-			cvt_createtime:{cvt_createtime},
-			cvt_updatetime:{cvt_updatetime}})`
-
-	stmt, err := conn.PrepareNeo(sqlStr)
-	if err := common.ErrInternalServer(err); err != nil {
-		return numResult, err
-	}
-	defer stmt.Close()
+func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) error {
 
 	now := time.Now().UnixNano()
 
@@ -92,33 +60,31 @@ func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) (numResult 
 	params["cvt_createtime"] = now
 	params["cvt_updatetime"] = now
 
-	result, err := stmt.ExecNeo(params)
+	c := NewCypher().
+		Create(`(p:cv_template {
+			cvt_id:{cvt_id}, 
+			cvt_no:{cvt_no}, 
+			cvt_name:{cvt_name},
+			cvt_fmt:{cvt_fmt}, 
+			cvt_size:{cvt_size}, 
+			cvt_language:{cvt_language}, 
+			cvt_color:{cvt_color}, 
+			cvt_imgpath:{cvt_imgpath}, 
+			cvt_csspath:{cvt_csspath},
+			cvt_createtime:{cvt_createtime},
+			cvt_updatetime:{cvt_updatetime}})`).Params(params)
+
+	err := ExecNeo(c)
+
 	if err := common.ErrInternalServer(err); err != nil {
-		return numResult, err
+		return err
 	}
-	numResult, err = result.RowsAffected()
-	if err := common.ErrInternalServer(err); err != nil {
-		return numResult, err
-	}
-	return numResult, err
+
+	return nil
 }
 
 //修改简历模板
 func (this *cvtRepository) UpdateCVTemplate(md models.CVTemplate) error {
-	conn := GetConn()
-	defer conn.Close()
-
-	sqlStr := `
-		MATCH (n:cv_template) 
-		where n.cvt_id={cvt_id} set n.cvt_no = {cvt_no}, 
-		n.cvt_name = {cvt_name},
-		n.cvt_fmt = {cvt_fmt}, 
-		n.cvt_size = {cvt_size}, 
-		n.cvt_language = {cvt_language}, 
-		n.cvt_color = {cvt_color}, 
-		n.cvt_imgpath = {cvt_imgpath}, 
-		n.cvt_csspath = {cvt_csspath},
-		n.cvt_updatetime = {cvt_updatetime}`
 
 	now := time.Now().UnixNano()
 
@@ -134,77 +100,60 @@ func (this *cvtRepository) UpdateCVTemplate(md models.CVTemplate) error {
 	params["cvt_csspath"] = md.CVTCssPath
 	params["cvt_updatetime"] = now
 
-	stmt, err := conn.PrepareNeo(sqlStr)
-	defer stmt.Close()
+	c := NewCypher().
+		Match("(n:cv_template)").
+		Where("n.cvt_id={cvt_id}").
+		Set(`n.cvt_no = {cvt_no}, 
+				n.cvt_name = {cvt_name},
+				n.cvt_fmt = {cvt_fmt}, 
+				n.cvt_size = {cvt_size}, 
+				n.cvt_language = {cvt_language}, 
+				n.cvt_color = {cvt_color}, 
+				n.cvt_imgpath = {cvt_imgpath}, 
+				n.cvt_csspath = {cvt_csspath},
+				n.cvt_updatetime = {cvt_updatetime}`).Params(params)
+
+	err := ExecNeo(c)
 
 	if err := common.ErrInternalServer(err); err != nil {
 		return err
 	}
-	_, err = stmt.ExecNeo(params)
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return err
-	}
-	return err
+	return nil
 }
 
 func (this *cvtRepository) GetAllCVTS(p common.Pageable) (common.Pageable, error) {
-	conn := GetConn()
-	defer conn.Close()
-	sqlStrCount := `MATCH (n:cv_template) RETURN count(*)`
 
-	rows, err := conn.QueryNeo(sqlStrCount, nil)
-	defer rows.Close()
+	c := NewCypher().Match("(n:cv_template)").Return("count(*)")
 
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
+	var count int64
+
+	callback := func(row []interface{}) {
+		count = common.NilParseInt64(row[0])
 	}
 
-	nextDate, _, err := rows.NextNeo()
-	rows.Close()
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	count := nextDate[0].(int64)
+	err := QueryNeo(callback, c)
 
 	if err := common.ErrInternalServer(err); err != nil {
 		return p, err
 	}
 
 	Logger.Info("row count is:", count)
+	if count == 0 {
+		return p, nil
+	}
 	p.SetTotalElements(count)
-
-	sqlStr := `MATCH (n:cv_template) 
-		RETURN 
-			n.cvt_id,
-			n.cvt_no,
-			n.cvt_name,
-			n.cvt_fmt,
-			n.cvt_size,
-			n.cvt_language,
-			n.cvt_color,
-			n.cvt_imgpath,
-			n.cvt_csspath,
-			n.cvt_createtime,
-			n.cvt_updatetime
-		SKIP {offset} 
-		LIMIT {limit}`
 
 	params := make(map[string]interface{})
 	params["limit"] = p.PageSize
 	params["offset"] = p.GetOffSet()
 
-	data, _, _, err := conn.QueryNeoAll(sqlStr, params)
+	c = NewCypher().Match("(n:cv_template)").
+		Return("n.cvt_id,n.cvt_no,n.cvt_name,n.cvt_fmt,n.cvt_size,n.cvt_language,n.cvt_color,n.cvt_imgpath,n.cvt_csspath,n.cvt_createtime,n.cvt_updatetime").
+		Skip("{offset}").
+		Limit("{limit}").
+		Params(params)
 
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	// results := make([]*models.User, len(data))
-
-	for _, row := range data {
+	callback = func(row []interface{}) {
 		m := &models.CVTemplate{
 			CVTId:         common.NilParseString(row[0]),
 			CVTNo:         common.NilParseString(row[1]),
@@ -221,5 +170,11 @@ func (this *cvtRepository) GetAllCVTS(p common.Pageable) (common.Pageable, error
 		p.AddContent(m)
 	}
 
-	return p, err
+	err = QueryNeo(callback, c)
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return p, err
+	}
+
+	return p, nil
 }

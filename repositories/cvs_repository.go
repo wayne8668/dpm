@@ -3,7 +3,6 @@ package repositories
 import (
 	"dpm/common"
 	"dpm/models"
-	"fmt"
 	"time"
 )
 
@@ -19,39 +18,28 @@ func NewCVSRepository() *cvsRepository {
 }
 
 //设置简历模板
-func (this *cvsRepository) ReSetCVTemp(uid string, cvid string, cvtid string) (numResult int, err error) {
-	conn := GetConn()
-	defer conn.Close()
-	sqlStr := `match (u:USER) - [:has_cv] ->(cv:curriculum_vitae) - [r1:include_cvt] -> (),(cvt:cv_template) 
-			where u.id = {uid} and cv.cv_id = {cvid} and cvt.cvt_id = {cvtid}
-			create (cv) - [:include_cvt] -> (cvt) 
-			delete r1`
+func (this *cvsRepository) ReSetCVTemp(uid string, cvid string, cvtid string) error {
 
 	params := make(map[string]interface{})
 	params["uid"] = uid
 	params["cvtid"] = cvtid
 	params["cvid"] = cvid
 
-	_, err = conn.ExecNeo(sqlStr, params)
+	c := NewCypher().Match("(u:user) - [:has_cv] ->(cv:curriculum_vitae) - [r:include_cvt] -> (),(cvt:cv_template)").
+		Where("u.id = {uid} and cv.cv_id = {cvid} and cvt.cvt_id = {cvtid}").
+		Create("(cv) - [:include_cvt] -> (cvt) ").
+		Delete("r").Params(params)
+
+	err := ExecNeo(c)
 
 	if err := common.ErrInternalServer(err); err != nil {
-		return numResult, err
+		return err
 	}
-
-	return numResult, err
+	return nil
 }
 
 //新增简历
-func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (numResult int, err error) {
-	conn := GetConn()
-	defer conn.Close()
-	sqlStr := `match (u:user),(cvt:cv_template) 
-			where u.uid = {uid} and cvt.cvt_id = {cvtid}
-			create (u) - [:has_cv] ->(cv:curriculum_vitae{
-				cv_id:{cv_id},
-				cv_name:{cv_name},
-				cv_createtime:{cv_createtime},
-				cv_updatetime:{cv_updatetime}}) - [:include_cvt] -> (cvt) `
+func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) error {
 
 	now := time.Now()
 	nowNano := time.Now().UnixNano()
@@ -65,83 +53,24 @@ func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (numResult
 	params["cv_createtime"] = nowNano
 	params["cv_updatetime"] = nowNano
 
-	_, err = conn.ExecNeo(sqlStr, params)
+	c := NewCypher().
+		Match("(u:user),(cvt:cv_template)").
+		Where("u.uid = {uid} and cvt.cvt_id = {cvtid}").
+		Create(`(u) - [:has_cv] ->(cv:curriculum_vitae{
+					cv_id:{cv_id},
+					cv_name:{cv_name},
+					cv_createtime:{cv_createtime},
+					cv_updatetime:{cv_updatetime}}) - [:include_cvt] -> (cvt)`).Params(params)
 
+	err := ExecNeo(c)
 	if err := common.ErrInternalServer(err); err != nil {
-		return numResult, err
+		return err
 	}
-
-	return 1, err
+	return nil
 }
 
 //返回用户的所有简历
-func (this *cvsRepository) GetUsersCVSOld(p common.Pageable, uid string) (common.Pageable, error) {
-	conn := GetConn()
-	defer conn.Close()
-
-	sqlStrCount := `match (u:user) - [:has_cv] ->(cv:curriculum_vitae)
-	where u.uid = {uid} 
-	return count(*)`
-
-	params := make(map[string]interface{})
-	params["uid"] = uid
-
-	rows, err := conn.QueryNeo(sqlStrCount, params)
-	defer rows.Close()
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	nextDate, _, err := rows.NextNeo()
-	rows.Close()
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	count := common.NilParseInt64(nextDate[0])
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	Logger.Info("row count is:", count)
-	p.SetTotalElements(count)
-
-	sqlStr := `match (u:user) - [:has_cv] ->(cv:curriculum_vitae)
-		where u.uid = {uid} 
-		return cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime
-		order by cv.cv_updatetime desc 
-		skip {offset} limit {limit}`
-
-	params["limit"] = p.PageSize
-	params["offset"] = p.GetOffSet()
-
-	data, _, _, err := conn.QueryNeoAll(sqlStr, params)
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	for _, row := range data {
-		m := &models.CurriculumVitae{
-			CVId:             common.NilParseString(row[0]),
-			CVName:           common.NilParseString(row[1]),
-			CViewPwd:         common.NilParseString(row[2]),
-			CustomDomainName: common.NilParseString(row[3]),
-			CVisibiliType:    common.NilParseInt(row[4]),
-			CVCreateTime:     common.NilParseJSONTime(row[5]),
-			CVUpdateTime:     common.NilParseJSONTime(row[6]),
-		}
-		p.AddContent(m)
-	}
-	Logger.Info("GetUsersCVS method return")
-	return p, err
-}
-
 func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pageable, error) {
-	var err error = nil
 
 	params := make(map[string]interface{})
 	params["uid"] = uid
@@ -151,29 +80,35 @@ func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pa
 	c := NewCypher().
 		Match("(u:user) - [:has_cv] -> (cv:curriculum_vitae)").
 		Where("u.uid = {uid}").
-		Return("count(*)")
+		Return("count(*)").Params(params)
 
-	NewNeo4GoTemplate(c).QueryNeoNextOne(params, func(row []interface{}) {
+	err := QueryNeo(func(row []interface{}) {
 		count = common.NilParseInt64(row[0])
-	})
+	}, c)
 
-	fmt.Println("=======================", c.String())
+	if err := common.ErrInternalServer(err); err != nil {
+		return p, err
+	}
 
 	Logger.Info("row count is:", count)
-	p.SetTotalElements(count)
 
-	sqlStr := NewCypher().
-		Match("(u:user) - [:has_cv] ->(cv:curriculum_vitae)").
-		Where("u.uid = {uid}").
-		Return("cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime").
-		OrderBy("order by cv.cv_updatetime desc").
-		Skip("{offset}").
-		Limit("{limit}")
+	if count == 0 {
+		return p, nil
+	}
+	p.SetTotalElements(count)
 
 	params["limit"] = p.PageSize
 	params["offset"] = p.GetOffSet()
 
-	NewNeo4GoTemplate(sqlStr).QueryNeoAll(params, func(row []interface{}) {
+	c = NewCypher().
+		Match("(u:user) - [:has_cv] ->(cv:curriculum_vitae)").
+		Where("u.uid = {uid}").
+		Return("cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime").
+		OrderBy("cv.cv_updatetime desc").
+		Skip("{offset}").
+		Limit("{limit}").Params(params)
+
+	QueryNeo(func(row []interface{}) {
 		m := &models.CurriculumVitae{
 			CVId:             common.NilParseString(row[0]),
 			CVName:           common.NilParseString(row[1]),
@@ -184,7 +119,7 @@ func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pa
 			CVUpdateTime:     common.NilParseJSONTime(row[6]),
 		}
 		p.AddContent(m)
-	})
+	}, c)
 
 	Logger.Info("GetUsersCVS method return")
 

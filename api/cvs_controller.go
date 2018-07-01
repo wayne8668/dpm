@@ -117,7 +117,7 @@ func CreateCVWithTemp(w http.ResponseWriter, r *http.Request) {
 //   required: true
 // responses:
 //   '200':
-//     description: "{\"numResult\":numResult}"
+//     description: "{\"rsp_msg\":ok}"
 //     schema:
 //       "$ref": "#/definitions/CurriculumVitae"
 //   '400':
@@ -147,14 +147,14 @@ func CreateCVWithTemp(w http.ResponseWriter, r *http.Request) {
 		panic(common.ErrBadRequest("the path param cvtid:[%s] is not exist..."))
 	}
 
-	nr,err := cvsRepositories.CreateCVWithTemp(uid,cvtid)
+	err := cvsRepositories.CreateCVWithTemp(uid,cvtid)
 	
 	if err!=nil {
 		panic(common.ErrTrace(err))
 	}
 
 	rm := make(map[string]interface{})
-	rm["numResult"] = nr
+	rm["rsp_msg"] = "ok"
 	jsonResponseOK(w, &rm)
 }
 

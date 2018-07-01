@@ -3,10 +3,12 @@ package repositories
 import (
 	"bytes"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
+	"io"
 )
 
 type Cypher struct {
 	cypher bytes.Buffer
+	params map[string]interface{}
 }
 
 func NewCypher() Cypher {
@@ -15,6 +17,11 @@ func NewCypher() Cypher {
 
 func (this Cypher) String() string {
 	return this.cypher.String()
+}
+
+func (this Cypher) Params(args map[string]interface{}) Cypher {
+	this.params = args
+	return this
 }
 
 func (this Cypher) Match(s string) Cypher {
@@ -73,19 +80,22 @@ func (this Cypher) Limit(s string) (r Cypher) {
 	return this
 }
 
-type Neo4GoTemplate struct {
-	cypher string
+func (this Cypher) Delete(s string) (r Cypher) {
+	this.cypher.WriteString(" delete ")
+	this.cypher.WriteString(s)
+	this.cypher.WriteString(" ")
+	return this
 }
 
-func NewNeo4GoTemplate(c Cypher) *Neo4GoTemplate {
-	t := &Neo4GoTemplate{}
-	t.cypher = c.String()
-	return t
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (this *Neo4GoTemplate) execute(params map[string]interface{}, callback func(bolt.Stmt) error) error {
-	conn := GetConn()
+func DoExecNeo(callback func(bolt.Conn) error) error {
+	conn, err := pool.OpenPool()
 	defer conn.Close()
+
+	if err != nil {
+		return err
+	}
 
 	tx, err := conn.Begin()
 
@@ -93,15 +103,14 @@ func (this *Neo4GoTemplate) execute(params map[string]interface{}, callback func
 		return err
 	}
 
-	stmt, err := conn.PrepareNeo(this.cypher)
-	defer stmt.Close()
+	defer func() {
+		if err := recover(); err != nil {
+			tx.Rollback()
+			panic(err)
+		}
+	}()
 
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	err = callback(stmt)
+	err = callback(conn)
 
 	if err != nil {
 		tx.Rollback()
@@ -112,43 +121,68 @@ func (this *Neo4GoTemplate) execute(params map[string]interface{}, callback func
 	return err
 }
 
-func (this *Neo4GoTemplate) ExecNeo(params map[string]interface{}) error {
-	return this.execute(params, func(stmt bolt.Stmt) error {
-		_, err := stmt.ExecNeo(params)
+func ExecNeo(cyphers ...Cypher) error {
+	return DoExecNeo(func(conn bolt.Conn) (err error) {
+		if len(cyphers) == 0 {
+			cypher := cyphers[0]
+			stmt, err := conn.PrepareNeo(cypher.String())
+			defer stmt.Close()
+
+			if err != nil {
+				return err
+			}
+			_, err = stmt.ExecNeo(cypher.params)
+		} else {
+			queries := make([]string, len(cyphers))
+			params := make([]map[string]interface{}, len(cyphers))
+
+			for idx, cypher := range cyphers {
+				queries[idx] = cypher.String()
+				params[idx] = cypher.params
+			}
+
+			pstmt, err := conn.PreparePipeline(queries...)
+			defer pstmt.Close()
+
+			if err != nil {
+				return err
+			}
+			_, err = pstmt.ExecPipeline(params...)
+		}
 		return err
 	})
 }
 
-func (this *Neo4GoTemplate) QueryNeoNextOne(params map[string]interface{}, callback func([]interface{})) error {
-	return this.execute(params, func(stmt bolt.Stmt) error {
-		rows, err := stmt.QueryNeo(params)
-		defer rows.Close()
-		if err != nil {
-			return err
-		}
-		r, _, err := rows.NextNeo()
-		if err != nil {
-			return err
-		}
-		callback(r)
-		return err
-	})
-}
+func QueryNeo(callback func([]interface{}), cypher Cypher) error {
+	return DoExecNeo(func(conn bolt.Conn) error {
 
-func (this *Neo4GoTemplate) QueryNeoAll(params map[string]interface{}, callback func([]interface{})) error {
-	return this.execute(params, func(stmt bolt.Stmt) error {
-		rows, err := stmt.QueryNeo(params)
-		defer rows.Close()
+		cypherStr := cypher.String()
+
+		Logger.Infof("Cypher string is -> [%s]", cypherStr)
+
+		stmt, err := conn.PrepareNeo(cypherStr)
+		defer stmt.Close()
+
 		if err != nil {
 			return err
 		}
-		r, _, err := rows.All()
+
+		r, err := stmt.QueryNeo(cypher.params)
+		defer r.Close()
+
 		if err != nil {
 			return err
 		}
-		for _, row := range r {
+
+		for {
+			row, _, err := r.NextNeo()
+			if err != nil || row == nil {
+				if err == io.EOF {
+					return nil
+				}
+				return err
+			}
 			callback(row)
 		}
-		return err
 	})
 }

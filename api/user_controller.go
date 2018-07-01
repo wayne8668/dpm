@@ -92,7 +92,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	//    "$ref": "#/definitions/CreateUserParam"
 	// responses:
 	//   '200':
-	//     description: "{\"numResult\":numResult}"
+	//     description: "{\"rsp_msg\":ok}"
 	//   '401':
 	//     description: "{\"rsp_msg\":errro msg} - Unauthorized Error"
 	//   '403':
@@ -103,10 +103,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var u models.User
 	unmarshal2Object(w, r, &u)
 	m := make(map[string]interface{})
-	if numResult, err := usersRepository.CreateUser(u); err != nil {
+	if err := usersRepository.CreateUser(u); err != nil {
 		panic(common.ErrTrace(err))
 	} else {
-		m["numResult"] = numResult
+		m["rsp_msg"] = "ok"
 		jsonResponseOK(w, m)
 	}
 }

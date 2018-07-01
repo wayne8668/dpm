@@ -27,73 +27,69 @@ func checkErr(err error) error {
 
 //返回用户信息
 func (this *UsersRepository) GetUserForAuth(u models.User) (udb *models.User, err error) {
-	conn := GetConn()
-	defer conn.Close()
-	sqlStr := `match (n:user) where n.name={name} and n.pwd={pwd} return n.uid,n.name,n.pwd`
 
 	params := make(map[string]interface{})
 	params["name"] = u.Name
 	params["pwd"] = u.Pwd
 
-	data, _, _, err := conn.QueryNeoAll(sqlStr, params)
+	c := NewCypher().Match("(n:user) where n.name={name} and n.pwd={pwd}").Return("n.uid,n.name,n.pwd").Params(params)
 
-	if err := common.ErrInternalServer(err); err != nil {
-		return udb, err
-	}
-
-	if len(data) == 0 {
-		return udb, err
-	}
-
-	results := make([]*models.User, len(data))
-	for idx, row := range data {
-		results[idx] = &models.User{
+	callback := func(row []interface{}) {
+		udb = &models.User{
 			UId:  common.NilParseString(row[0]),
 			Name: common.NilParseString(row[1]),
 			Pwd:  common.NilParseString(row[2]),
 		}
 	}
-	udb = results[0]
+
+	err = QueryNeo(callback, c)
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return nil, err
+	}
 	return udb, err
 }
 
 //用户是否存在
-func (this *UsersRepository) IsExist(u models.User) (isExist bool, err error) {
-
-	conn := GetConn()
-	defer conn.Close()
-	sqlStr := `match (n:user) where n.name={name} return n`
+func (this *UsersRepository) IsExist(u models.User) (bool, error) {
 
 	params := make(map[string]interface{})
 	params["name"] = u.Name
 
-	data, _, _, err := conn.QueryNeoAll(sqlStr, params)
+	c := NewCypher().Match("(n:user)").Where("n.name={name}").Return("n").Params(params)
+
+	var rowNum int64
+
+	callback := func(row []interface{}) {
+		rowNum++
+	}
+
+	err := QueryNeo(callback, c)
 
 	if err := common.ErrInternalServer(err); err != nil {
-		return isExist, err
+		return false, err
 	}
 
-	if len(data) == 0 {
-		return isExist, err
+	if rowNum == 0 {
+		return false, nil
 	}
-	return true, err
+
+	return true, nil
 }
 
 //新增用户
-func (this *UsersRepository) CreateUser(u models.User) (numResult int64, err error) {
+func (this *UsersRepository) CreateUser(u models.User) error {
 
 	isExist, err := this.IsExist(u)
 
 	if err := common.ErrInternalServer(err); err != nil {
-		return numResult, err
+		return err
 	}
 
 	if isExist {
 		err = common.ErrForbiddenf("user name [%s] is exist..", u.Name)
-		return numResult, err
+		return err
 	}
-
-	connStr := "CREATE (n:user {uid:{uid}, name:{name},pwd:{pwd},create_time:{create_time}})"
 
 	m := map[string]interface{}{
 		"uid":         NewUUID(),
@@ -102,68 +98,47 @@ func (this *UsersRepository) CreateUser(u models.User) (numResult int64, err err
 		"create_time": time.Now().UnixNano(),
 	}
 
-	conn := GetConn()
-	defer conn.Close()
+	c := NewCypher().Create("(n:user {uid:{uid}, name:{name},pwd:{pwd},create_time:{create_time}})").Params(m)
 
-	result, err := conn.ExecNeo(connStr, m)
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return numResult, err
-	}
-
-	numResult, err = result.RowsAffected()
+	err = ExecNeo(c)
 
 	if err := common.ErrInternalServer(err); err != nil {
-		return numResult, err
+		return err
 	}
 
-	return numResult, err
+	return nil
 }
 
 //返回所有用户
 func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, error) {
-	conn := GetConn()
-	defer conn.Close()
-	sqlStrCount := `MATCH (n:user) RETURN count(*)`
 
-	rows, err := conn.QueryNeo(sqlStrCount, nil)
-	defer rows.Close()
+	c := NewCypher().Match("(n:user)").Return("count(*)")
 
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
+	var count int64
+
+	callback := func(row []interface{}) {
+		count = common.NilParseInt64(row[0])
 	}
 
-	nextDate, _, err := rows.NextNeo()
-	rows.Close()
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	count := nextDate[0].(int64)
+	err := QueryNeo(callback, c)
 
 	if err := common.ErrInternalServer(err); err != nil {
 		return p, err
 	}
 
 	Logger.Info("row count is:", count)
+	if count == 0 {
+		return p, nil
+	}
 	p.SetTotalElements(count)
-
-	sqlStr := `MATCH (n:user) RETURN n.uid,n.name,n.pwd,n.create_time SKIP {offset} LIMIT {limit}`
 
 	params := make(map[string]interface{})
 	params["limit"] = p.PageSize
 	params["offset"] = p.GetOffSet()
 
-	data, _, _, err := conn.QueryNeoAll(sqlStr, params)
+	c = NewCypher().Match("(n:user)").Return("n.uid,n.name,n.pwd,n.create_time").Skip("{offset}").Limit("{limit}").Params(params)
 
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	// results := make([]*models.User, len(data))
-
-	for _, row := range data {
+	callback = func(row []interface{}) {
 		m := &models.User{
 			UId:        common.NilParseString(row[0]),
 			Name:       common.NilParseString(row[1]),
@@ -173,5 +148,11 @@ func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, er
 		p.AddContent(m)
 	}
 
-	return p, err
+	err = QueryNeo(callback, c)
+
+	if err := common.ErrInternalServer(err); err != nil {
+		return p, err
+	}
+
+	return p, nil
 }

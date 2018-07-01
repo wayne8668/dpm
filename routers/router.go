@@ -27,7 +27,6 @@ var (
 
 	controllerRouters = []ControllerRouter{
 		userRouter,
-		projectRouter,
 		cvRouter,
 		cvtRouter,
 		// swaggerRouter,
