@@ -12,7 +12,7 @@ type AppError struct {
 
 func ErrInternalServer(err error) error {
 	if err == nil {
-		return err
+		return nil
 	}
 	ae := ErrTraceCode(http.StatusInternalServerError, err).(*AppError)
 	ae.error.(*errors.Err).SetLocation(1)

@@ -7,10 +7,10 @@ import (
 var (
 	cvRouter = ControllerRouter{
 		Route{																
-			Name:        "cvs_update",								//修改简历
+			Name:        "cvs_update_cvm_cvt",								//修改简历模板
 			Methods:     []string{"PUT", "OPTIONS"},
-			Pattern:     prefixion + "/cvs/cvms/cvt/{uid}",
-			HandlerFunc: api.UpdateCVWithTemp,
+			Pattern:     prefixion + "/cvs/{cvid}/cvms/cvt/{cvtid}",
+			HandlerFunc: api.ReSetCVTemp,
 		},
 		Route{																
 			Name:        "cvs_create_cvm_cvt",								//新增简历
@@ -19,7 +19,7 @@ var (
 			HandlerFunc: api.CreateCVWithTemp,
 		},
 		Route{
-			Name:        "cvs_users",									//返回指定用户的所有简历
+			Name:        "cvs_users",										//返回指定用户的所有简历
 			Methods:     []string{"GET", "OPTIONS"},
 			Pattern:     prefixion + "/cvs",
 			HandlerFunc: api.GetUsersCVS,

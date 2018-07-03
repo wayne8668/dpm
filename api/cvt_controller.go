@@ -14,12 +14,12 @@ var (
 	cvtsRepository = repositories.NewCVTRepository()
 )
 
-//新增简历模板
+//新增模板
 func CreateCVT(w http.ResponseWriter, r *http.Request) {
 
 	// swagger:operation POST /cvts cvts CreateCVT
 	//
-	//新增简历模板
+	//新增模板
 	//
 	// Create a new cv template
 	//
@@ -62,12 +62,12 @@ func CreateCVT(w http.ResponseWriter, r *http.Request) {
 	jsonResponseOK(w, rm)
 }
 
-//修改简历模板
+//修改模板
 func UpdateCVT(w http.ResponseWriter, r *http.Request) {
 
 	// swagger:operation PUT /cvts/{id} cvts UpdateCVT
 	//
-	//修改简历模板
+	//修改模板
 	//
 	// Update the cv template
 	//
@@ -103,7 +103,7 @@ func UpdateCVT(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	cvtId := vars["id"]
 	if cvtId == "" {
-		panic(common.ErrBadRequest("the cvt id is required"))4
+		panic(common.ErrBadRequest("the cvt id is required"))
 	}
 	var cvt models.CVTemplate
 	cvt.CVTId = cvtId

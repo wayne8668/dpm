@@ -88,8 +88,74 @@ var (
 	jsonResponseOK(w, &cvs)
 }
 
-//修改简历
-func UpdateCVWithTemp(w http.ResponseWriter, r *http.Request) {
+//修改简历模板
+func ReSetCVTemp(w http.ResponseWriter, r *http.Request) {
+// swagger:operation PUT /cvs/{cvid}/cvms/cvt/{cvtid} cvs ReSetCVTemp
+//
+//修改简历模板
+//
+// Reset User's CVS with template
+//
+// ---
+// Consumes:
+// - application/json
+// produces:
+// - application/json
+// parameters:
+// - name: cvtid
+//   in: path
+//   description: cvs of template id
+//   required: true
+// - name: cvid
+//   in: path
+//   description: cv's id
+//   required: true
+// - name: uid
+//   in: query
+//   description: cvs of user id
+//   required: true
+// responses:
+//   '200':
+//     description: "{\"rsp_msg\":ok}"
+//     schema:
+//       "$ref": "#/definitions/CurriculumVitae"
+//   '400':
+//     description: "{\"rsp_msg\":errro msg} - Bad Request Error"
+//   '401':
+//     description: "{\"rsp_msg\":errro msg} - Unauthorized Error"
+//   '403':
+//     description: "{\"rsp_msg\":errro msg} - Forbidden Error"
+//   '500':
+//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
+
+	vars := mux.Vars(r)
+	cvtid := vars["cvtid"]
+	cvid := vars["cvid"]
+	uid := ParseQueryGet(r,"uid")
+	uid = strings.TrimSpace(uid)
+
+	//判断是否为当前用户操作
+	ut := context.Get(r,CURRENT_USER).(*common.UserToken)
+	if ut.Id != uid {
+		panic(common.ErrForbidden("You can create cv only for youself..."))
+	}
+
+	//判断模板是否存在
+	if ok,err := cvtsRepository.IsExist(cvtid);err != nil {
+		panic(common.ErrTrace(err))
+	}else if !ok {
+		panic(common.ErrBadRequest("the path param cvtid:[%s] is not exist..."))
+	}
+
+	err := cvsRepositories.ReSetCVTemp(uid,cvid,cvtid)
+
+	if err!=nil {
+		panic(common.ErrTrace(err))
+	}
+
+	rm := make(map[string]interface{})
+	rm["rsp_msg"] = "ok"
+	jsonResponseOK(w, &rm)
 
 }
 
@@ -117,7 +183,7 @@ func CreateCVWithTemp(w http.ResponseWriter, r *http.Request) {
 //   required: true
 // responses:
 //   '200':
-//     description: "{\"rsp_msg\":ok}"
+//     description: "{\"cvid\":cvid}"
 //     schema:
 //       "$ref": "#/definitions/CurriculumVitae"
 //   '400':
@@ -147,14 +213,14 @@ func CreateCVWithTemp(w http.ResponseWriter, r *http.Request) {
 		panic(common.ErrBadRequest("the path param cvtid:[%s] is not exist..."))
 	}
 
-	err := cvsRepositories.CreateCVWithTemp(uid,cvtid)
+	cvid ,err := cvsRepositories.CreateCVWithTemp(uid,cvtid)
 	
 	if err!=nil {
 		panic(common.ErrTrace(err))
 	}
 
 	rm := make(map[string]interface{})
-	rm["rsp_msg"] = "ok"
+	rm["cvid"] = cvid
 	jsonResponseOK(w, &rm)
 }
 

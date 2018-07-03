@@ -1,0 +1,90 @@
+返回所有节点
+
+match (n) return n
+
+删除所有节点
+
+match (n) detach delete n
+
+新增节点
+
+CREATE (p:PROJECT {id:{id}, name:{name}, desc:{desc},create_time:{create_time}})
+
+更新节点
+
+MATCH (n:PROJECT) where n.id={id} set n.name ={name},n.desc = {desc}
+
+删除节点
+
+MATCH (n:PROJECT) where n.id={id} delete n
+
+新增关系和节点
+
+MATCH (p:PROJECT) where p.pid={pid} create (:TASK_GROUP{tgid:{tgid},name:{name},desc:{desc}}) <- [:PROJECT_HAS_TASKGROUP] - (p)
+
+返回指定节点
+
+MATCH (n:curriculum_vitae) where n.uid = {uid} RETURN n.cv_id,n.cv_name
+
+返回指定节点-分页
+
+MATCH (n:USER) RETURN n.id,n.name,n.pwd SKIP {offset} LIMIT {limit}
+
+match (u:user) - [:has_cv] ->(cv:curriculum_vitae)
+where u.uid = '7c495c4e-06b0-4dd2-9f93-93c9f080726f'
+return cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime
+order by cv.cv_updatetime desc 
+skip 0 limit 10
+
+重新设定关系并删除旧关系
+
+match (u:USER) - [:has_cv] ->(cv:curriculum_vitae) - [r1:include_cvt] -> (),(cvt:cv_template) 
+where u.id = {uid} and cv.cv_id = {cvid} and cvt.cvt_id = {cvtid}
+create (cv) - [:include_cvt] -> (cvt) 
+delete r1
+
+
+match (u:user),(cvt:cv_template) where u.id = {uid} and cvt.cvt_id = {cvtid}
+create (u) - [:has_cv] ->(cv:curriculum_vitae{cv_id:{cv_id},cv_name:{cv_name},cv_createtime:{cv_createtime},cv_updatetime:{cv_updatetime}}) - [:include_cvt] -> (cvt) 
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------
+
+// swagger:operation POST /cvs/cvms/cvt/{cvtid} cvs CreateCVWithTemp
+//
+//新增简历
+//
+// create User's CVS with template
+//
+// ---
+// Consumes:
+// - application/json
+// produces:
+// - application/json
+// parameters:
+// - name: cvtid
+//   in: path
+//   description: cvs of template id
+//   required: true
+// - name: uid
+//   in: query
+//   description: cvs of user id
+//   required: true
+// responses:
+//   '200':
+//     description: "{\"rsp_msg\":\"ok\"}"
+//     schema:
+//       "$ref": "#/definitions/CurriculumVitae"
+//   '400':
+//     description: "{\"rsp_msg\":errro msg} - Bad Request Error"
+//   '401':
+//     description: "{\"rsp_msg\":errro msg} - Unauthorized Error"
+//   '403':
+//     description: "{\"rsp_msg\":errro msg} - Forbidden Error"
+//   '500':
+//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"

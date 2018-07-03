@@ -25,10 +25,7 @@ func (this *cvsRepository) ReSetCVTemp(uid string, cvid string, cvtid string) er
 	params["cvtid"] = cvtid
 	params["cvid"] = cvid
 
-	c := NewCypher().Match("(u:user) - [:has_cv] ->(cv:curriculum_vitae) - [r:include_cvt] -> (),(cvt:cv_template)").
-		Where("u.id = {uid} and cv.cv_id = {cvid} and cvt.cvt_id = {cvtid}").
-		Create("(cv) - [:include_cvt] -> (cvt) ").
-		Delete("r").Params(params)
+	c := NewCypher("cvs_reposity.reset_cvtemp.cypher").Params(params)
 
 	err := ExecNeo(c)
 
@@ -39,34 +36,29 @@ func (this *cvsRepository) ReSetCVTemp(uid string, cvid string, cvtid string) er
 }
 
 //新增简历
-func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) error {
+func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (cvid string, err error) {
 
 	now := time.Now()
 	nowNano := time.Now().UnixNano()
 	nowFmt := now.Format("060102")
 
+	cvid = NewUUID()
+
 	params := make(map[string]interface{})
 	params["uid"] = uid
 	params["cvtid"] = cvtid
-	params["cv_id"] = NewUUID()
+	params["cv_id"] = cvid
 	params["cv_name"] = "我的简历-" + nowFmt
 	params["cv_createtime"] = nowNano
 	params["cv_updatetime"] = nowNano
 
-	c := NewCypher().
-		Match("(u:user),(cvt:cv_template)").
-		Where("u.uid = {uid} and cvt.cvt_id = {cvtid}").
-		Create(`(u) - [:has_cv] ->(cv:curriculum_vitae{
-					cv_id:{cv_id},
-					cv_name:{cv_name},
-					cv_createtime:{cv_createtime},
-					cv_updatetime:{cv_updatetime}}) - [:include_cvt] -> (cvt)`).Params(params)
+	c := NewCypher("cvs_reposity.createcv_with_temp.cypher").Params(params)
 
-	err := ExecNeo(c)
+	err = ExecNeo(c)
 	if err := common.ErrInternalServer(err); err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return cvid, nil
 }
 
 //返回用户的所有简历
@@ -77,10 +69,7 @@ func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pa
 
 	var count int64
 
-	c := NewCypher().
-		Match("(u:user) - [:has_cv] -> (cv:curriculum_vitae)").
-		Where("u.uid = {uid}").
-		Return("count(*)").Params(params)
+	c := NewCypher("cvs_reposity.get_users_cvs.cypher_count").Params(params)
 
 	err := QueryNeo(func(row []interface{}) {
 		count = common.NilParseInt64(row[0])
@@ -100,13 +89,7 @@ func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pa
 	params["limit"] = p.PageSize
 	params["offset"] = p.GetOffSet()
 
-	c = NewCypher().
-		Match("(u:user) - [:has_cv] ->(cv:curriculum_vitae)").
-		Where("u.uid = {uid}").
-		Return("cv.cv_id,cv.cv_name,cv.cview_pwd,cv.custom_domainname,cv.cvisibili_type,cv.cv_createtime,cv.cv_updatetime").
-		OrderBy("cv.cv_updatetime desc").
-		Skip("{offset}").
-		Limit("{limit}").Params(params)
+	c = NewCypher("cvs_reposity.get_users_cvs.cypher_pageable").Params(params)
 
 	QueryNeo(func(row []interface{}) {
 		m := &models.CurriculumVitae{

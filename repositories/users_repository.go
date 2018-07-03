@@ -32,7 +32,7 @@ func (this *UsersRepository) GetUserForAuth(u models.User) (udb *models.User, er
 	params["name"] = u.Name
 	params["pwd"] = u.Pwd
 
-	c := NewCypher().Match("(n:user) where n.name={name} and n.pwd={pwd}").Return("n.uid,n.name,n.pwd").Params(params)
+	c := NewCypher("users_repository.get_user_for_auth.cypher").Params(params)
 
 	callback := func(row []interface{}) {
 		udb = &models.User{
@@ -56,7 +56,7 @@ func (this *UsersRepository) IsExist(u models.User) (bool, error) {
 	params := make(map[string]interface{})
 	params["name"] = u.Name
 
-	c := NewCypher().Match("(n:user)").Where("n.name={name}").Return("n").Params(params)
+	c := NewCypher("users_repository.is_exist.cypher").Params(params)
 
 	var rowNum int64
 
@@ -98,7 +98,7 @@ func (this *UsersRepository) CreateUser(u models.User) error {
 		"create_time": time.Now().UnixNano(),
 	}
 
-	c := NewCypher().Create("(n:user {uid:{uid}, name:{name},pwd:{pwd},create_time:{create_time}})").Params(m)
+	c := NewCypher("users_repository.create_user.cypher").Params(m)
 
 	err = ExecNeo(c)
 
@@ -112,7 +112,7 @@ func (this *UsersRepository) CreateUser(u models.User) error {
 //返回所有用户
 func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, error) {
 
-	c := NewCypher().Match("(n:user)").Return("count(*)")
+	c := NewCypher("users_repository.get_all_users.cypher_count")
 
 	var count int64
 
@@ -136,7 +136,7 @@ func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, er
 	params["limit"] = p.PageSize
 	params["offset"] = p.GetOffSet()
 
-	c = NewCypher().Match("(n:user)").Return("n.uid,n.name,n.pwd,n.create_time").Skip("{offset}").Limit("{limit}").Params(params)
+	c = NewCypher("users_repository.get_all_users.cypher_pageable").Params(params)
 
 	callback = func(row []interface{}) {
 		m := &models.User{
