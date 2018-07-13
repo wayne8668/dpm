@@ -101,8 +101,6 @@ func ReSetCVTemp(req ReSetCVTempRequest, r *http.Request) error {
 // responses:
 //   '200':
 //     description: "{\"rsp_msg\":ok}"
-//     schema:
-//       "$ref": "#/definitions/CurriculumVitae"
 //   '400':
 //     description: "{\"rsp_msg\":errro msg} - Bad Request Error"
 //   '401':
@@ -160,8 +158,6 @@ func CreateCVWithTemp(req CreateCVWithTempRequest, r *http.Request) (string ,err
 // responses:
 //   '200':
 //     description: "{\"cvid\":cvid}"
-//     schema:
-//       "$ref": "#/definitions/CurriculumVitae"
 //   '400':
 //     description: "{\"rsp_msg\":errro msg} - Bad Request Error"
 //   '401':
