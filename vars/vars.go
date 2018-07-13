@@ -5,6 +5,9 @@ import (
 )
 
 const (
+
+	PROJECT_NAME = "dpm"
+
 	CYPHER_PATH = "./conf/cypher.ini"
 
 	APP_CFG_PATH = "./conf/config.ini"

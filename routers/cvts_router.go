@@ -22,7 +22,7 @@ var (
 			Name:        "cvts_all_page",
 			Methods:     []string{"GET", "OPTIONS"},
 			Pattern:     prefixion + "/cvts",
-			HandlerFunc: api.GetAllCVTS,
+			HandlerFunc: api.NewGetAllCVTS,
 		},
 	}
 )

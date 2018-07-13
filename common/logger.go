@@ -1,6 +1,7 @@
 package common
 
 import (
+	"dpm/vars"
 	"fmt"
 	"github.com/op/go-logging"
 	"os"
@@ -12,7 +13,7 @@ const (
 )
 
 var (
-	Logger = logging.MustGetLogger(PROJECT_NAME)
+	Logger = logging.MustGetLogger(vars.PROJECT_NAME)
 	format = logging.MustStringFormatter(LOG_FORMAT)
 )
 

@@ -7,9 +7,6 @@ import (
 	"dpm/common"
 	"dpm/models"
 	"dpm/repositories"
-	"fmt"
-	"net/http"
-	"strconv"
 )
 
 var (
@@ -17,7 +14,7 @@ var (
 )
 
 //用户登录
-func Loggin(w http.ResponseWriter, r *http.Request) {
+func Loggin(u models.User) map[string]interface{} {
 
 	// swagger:operation POST /users/login users Loggin
 	//
@@ -45,9 +42,6 @@ func Loggin(w http.ResponseWriter, r *http.Request) {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	var u models.User
-	unmarshal2Object(w, r, &u)
-	m := make(map[string]interface{})
 	if udb, err := usersRepository.GetUserForAuth(u); err != nil {
 		panic(common.ErrTrace(err))
 	} else {
@@ -63,14 +57,16 @@ func Loggin(w http.ResponseWriter, r *http.Request) {
 		if token, err := common.CreateToken(ut); err != nil {
 			panic(common.ErrTrace(err))
 		} else {
+			m := make(map[string]interface{})
 			m[common.TOKEN_KEY] = token
-			jsonResponseOK(w, m)
+			m["auth_user"] = udb
+			return m
 		}
 	}
 }
 
 //新增用户
-func CreateUser(w http.ResponseWriter, r *http.Request) {
+func CreateUser(u models.User) error {
 
 	// swagger:operation POST /users users CreateUser
 	//
@@ -100,19 +96,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	var u models.User
-	unmarshal2Object(w, r, &u)
-	m := make(map[string]interface{})
-	if err := usersRepository.CreateUser(u); err != nil {
-		panic(common.ErrTrace(err))
-	} else {
-		m["rsp_msg"] = "ok"
-		jsonResponseOK(w, m)
-	}
+	return usersRepository.CreateUser(u)
 }
 
 //用户注册
-func RegisterUser(w http.ResponseWriter, r *http.Request) {
+func RegisterUser(u models.User) {
 	// swagger:operation POST /users/register users RegisterUser
 	//
 	////用户注册
@@ -139,13 +127,13 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	CreateUser(w, r)
+	CreateUser(u)
 }
 
 /*
 * 返回用户列表
  */
-func GetAllUsers(w http.ResponseWriter, r *http.Request) {
+func GetAllUsers(req PageableRequest) (common.Pageable,error) {
 	// swagger:operation GET /users users GetAllUsers
 	//
 	//返回用户列表
@@ -178,29 +166,12 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	// vars := mux.SetURLVars(r)
-	// vars := r.URL.Query()
-	ls := ParseQueryGet(r,"limit")
-	pgs := ParseQueryGet(r,"page")
-	fmt.Printf("ls:[%s];pgs:[%s]", ls,pgs)
 
-	
-	l, _ := strconv.ParseInt(ls, 10, 64)
-	pg, _ := strconv.ParseInt(pgs, 10, 64)
-
-	fmt.Println("==================", l, pg)
-
-	p, err := common.NewPageable(l, pg)
+	p, err := common.NewPageable(req.Limit, req.Page)
 
 	if err != nil {
 		panic(common.ErrTrace(err))
 	}
 
-	pr, err := usersRepository.GetAllUsers(p)
-
-	if err != nil {
-		panic(common.ErrTrace(err))
-	}
-
-	jsonResponseOK(w, &pr)
+	return usersRepository.GetAllUsers(p)
 }

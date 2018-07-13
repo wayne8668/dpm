@@ -3,7 +3,6 @@ package api
 import (
 	"strconv"
 	"dpm/common"
-	"github.com/gorilla/mux"
 	// "fmt"
 	"dpm/models"
 	"dpm/repositories"
@@ -14,8 +13,12 @@ var (
 	cvtsRepository = repositories.NewCVTRepository()
 )
 
+type CreateCVTRequest struct{
+	CVT models.CVTemplate	`qval:"inbody"`
+}
+
 //新增模板
-func CreateCVT(w http.ResponseWriter, r *http.Request) {
+func CreateCVT(req CreateCVTRequest) error {
 
 	// swagger:operation POST /cvts cvts CreateCVT
 	//
@@ -48,22 +51,16 @@ func CreateCVT(w http.ResponseWriter, r *http.Request) {
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
 	Logger.Info("CreateCVT method is invorked....")
-	var cvt models.CVTemplate
-	unmarshal2Object(w, r, &cvt)
-	err := cvtsRepository.CreateNewCVTemplate(cvt)
-	if err != nil {
-		panic(common.ErrTrace(err))
-	}
-	//response
-	rm := map[string]interface{}{
-		"rsp_msg": "ok",
-	}
+	return cvtsRepository.CreateNewCVTemplate(req.CVT)
+}
 
-	jsonResponseOK(w, rm)
+type UpdateCVTRequest struct{
+	Id string	`qval:"id,inpath"`
+	CVT models.CVTemplate	`qval:"inbody"`
 }
 
 //修改模板
-func UpdateCVT(w http.ResponseWriter, r *http.Request) {
+func UpdateCVT(req UpdateCVTRequest) error {
 
 	// swagger:operation PUT /cvts/{id} cvts UpdateCVT
 	//
@@ -99,23 +96,9 @@ func UpdateCVT(w http.ResponseWriter, r *http.Request) {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	Logger.Info("UpdateCVT method is invorked....")
-	vars := mux.Vars(r)
-	cvtId := vars["id"]
-	if cvtId == "" {
-		panic(common.ErrBadRequest("the cvt id is required"))
-	}
-	var cvt models.CVTemplate
-	cvt.CVTId = cvtId
-	unmarshal2Object(w, r, &cvt)
-	if err := cvtsRepository.UpdateCVTemplate(cvt); err != nil {
-		panic(common.ErrTrace(err))
-	}
-	//response
-	rm := map[string]interface{}{
-		"rsp_msg": "ok",
-	}
-	jsonResponseOK(w, rm)
+
+	req.CVT.CVTId = req.Id
+	return cvtsRepository.UpdateCVTemplate(req.CVT)
 }
 
 
@@ -180,4 +163,58 @@ func UpdateCVT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonResponseOK(w, &pr)
+}
+//////////////////////////////////////////////////////////////////
+
+
+/*
+* 返回所有模板-分页
+ */
+ func NewGetAllCVTS(req PageableRequest) common.Pageable {
+	// swagger:operation GET /cvts cvts GetAllCVTS
+	//
+	//返回所有模板-分页
+	//
+	// Return All Users
+	//
+	// ---
+	// Consumes:
+	// - application/json
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: limit
+	//   in: query
+	//   description: per page limit
+	//   required: true
+	// - name: page
+	//   in: query
+	//   description: page number
+	//   required: true
+	// responses:
+	//   '200':
+	//     description: "返回模板分页列表"
+	//     schema:
+	//       "$ref": "#/definitions/Pageable"
+	//   '400':
+	//     description: "{\"rsp_msg\":errro msg} - Bad Request Error"
+	//   '401':
+	//     description: "{\"rsp_msg\":errro msg} - Unauthorized Error"
+	//   '500':
+	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
+
+
+	p, err := common.NewPageable(10, req.Page)
+
+	if err != nil {
+		panic(common.ErrTrace(err))
+	}
+
+	pr, err := cvtsRepository.GetAllCVTS(p)
+
+	if err != nil {
+		panic(common.ErrTrace(err))
+	}
+
+	return pr
 }

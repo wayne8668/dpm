@@ -3,14 +3,14 @@ package routers
 import (
 	"dpm/common"
 	"github.com/gorilla/mux"
-	"net/http"
+	// "net/http"
 )
 
 type Route struct {
 	Name        string
 	Methods     []string
 	Pattern     string
-	HandlerFunc http.HandlerFunc
+	HandlerFunc interface{}
 }
 
 type (
@@ -29,7 +29,6 @@ var (
 		userRouter,
 		cvRouter,
 		cvtRouter,
-		// swaggerRouter,
 		// add new router here...
 	}
 )
@@ -40,10 +39,10 @@ func NewRouter() *mux.Router {
 	for _, controllerRouter := range controllerRouters {
 		for _, route := range controllerRouter {
 			// var handler HandlerFunc
-			handler := common.ValidateTokenHandlerFunc(route.HandlerFunc, route.Name)
+			handler := common.ValidateTokenHandlerFunc(HttpHandlerWrap(route), route.Name)
 			handler = common.AppErrorHandlerFunc(handler)
 			handler = CORSAllowMiddleware(route.Methods, handler)
-			handler = RouteLogMiddleware(handler, route.Name)
+			// handler = RouteLogMiddleware(handler, route.Name)
 			muxRouter.Path(route.Pattern).Name(route.Name).Handler(handler).Methods(route.Methods...)
 		}
 	}

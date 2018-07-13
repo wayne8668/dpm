@@ -81,7 +81,7 @@ func (this *Pageable) GetOffSet() int64 {
 	return this.PageSize * (this.NumberOfPage - 1)
 }
 
-func (this *Pageable) AddContent(c ...interface{}) {
+func (this *Pageable) AddContent(c interface{}) {
 	this.Content = append(this.Content, c)
 	this.NumberOfElements = int64(len(this.Content))
 }

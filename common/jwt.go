@@ -8,11 +8,12 @@ import (
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gorilla/context"
 	"time"
+	"dpm/vars"
 )
 
 var (
 	SecretMap = map[string]string{
-		PROJECT_NAME: "welcome to dmp",
+		vars.PROJECT_NAME: "welcome to dmp",
 	}
 
 	IgnoreValidateRoute = map[string]bool{
@@ -50,14 +51,14 @@ func CreateToken(user *UserToken) (string, error) {
 			// see http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-20#section-4.1.4
 			ExpiresAt: now.Add(time.Hour * 24).Unix(), //for dev
 			// ExpiresAt: now.Add(time.Minute * 10).Unix(),
-			Issuer:   PROJECT_NAME,
+			Issuer:   vars.PROJECT_NAME,
 			IssuedAt: issuedAt.Unix(),
 		},
 		"level1",
 		user,
 	}
 	// Creat token string
-	return t.SignedString([]byte(SecretMap[PROJECT_NAME]))
+	return t.SignedString([]byte(SecretMap[vars.PROJECT_NAME]))
 }
 
 func ValidateTokenHandlerFunc(inner http.Handler, routeName string) http.Handler {
@@ -68,7 +69,7 @@ func ValidateTokenHandlerFunc(inner http.Handler, routeName string) http.Handler
 			// Get token from request
 			token, err := request.ParseFromRequestWithClaims(r, request.AuthorizationHeaderExtractor, &UserClaims{},
 				func(token *jwt.Token) (interface{}, error) {
-					return []byte(SecretMap[PROJECT_NAME]), nil
+					return []byte(SecretMap[vars.PROJECT_NAME]), nil
 				})
 			Logger.Info("token:", token)
 			// If the token is missing or invalid, return error

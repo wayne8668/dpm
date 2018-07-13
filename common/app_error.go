@@ -19,6 +19,12 @@ func ErrInternalServer(err error) error {
 	return ae
 }
 
+func ErrInternalServerf(format string, args ...interface{}) error {
+	ae := Errf(http.StatusInternalServerError, format, args).(*AppError)
+	ae.error.(*errors.Err).SetLocation(1)
+	return ae
+}
+
 func ErrForbiddenf(format string, args ...interface{}) error {
 	ae := Errf(http.StatusForbidden, format, args).(*AppError)
 	ae.error.(*errors.Err).SetLocation(1)

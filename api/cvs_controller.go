@@ -1,11 +1,8 @@
 package api
 
 import (
-	"strconv"
 	"github.com/gorilla/context"
 	"dpm/common"
-	"strings"
-	"github.com/gorilla/mux"
 	"dpm/models"
 	"dpm/repositories"
 	"net/http"
@@ -16,8 +13,18 @@ var (
 	cvsRepositories = repositories.NewCVSRepository()
 )
 
+type PageableRequest struct{
+	Limit int64 `qval:"limit,inquery"`
+	Page int64	`qval:"page,inquery"`
+}
+
+type GetUsersCVSRequest struct{
+	PageableRequest	`qval:"+"`
+	Uid string `qval:"uid,inquery"`
+}
+
 //返回指定用户的所有简历
- func GetUsersCVS(w http.ResponseWriter, r *http.Request) {
+ func GetUsersCVS(req GetUsersCVSRequest) (common.Pageable, error) {
 	// swagger:operation GET /cvs cvs GetUsersCVS
 	//
 	//返回指定用户的所有简历
@@ -56,40 +63,23 @@ var (
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-
-	ls := ParseQueryGet(r,"limit")
-	pgs := ParseQueryGet(r,"page")
-	Logger.Infof("ls:[%s];pgs:[%s]", ls,pgs)
-
-	uid := ParseQueryGet(r,"uid")
-	uid = strings.TrimSpace(uid)
-
-	Logger.Infof("GetUsersCVS param uid is:[%s]", uid)
-
-	if uid =="" {
-		panic(common.ErrBadRequest("Bad Request param in query:{uid} is null"))
-	}
-
-	l, _ := strconv.ParseInt(ls, 10, 64)
-	pg, _ := strconv.ParseInt(pgs, 10, 64)
-
-	p, err := common.NewPageable(l, pg)
+	p, err := common.NewPageable(req.Limit, req.Page)
 
 	if err != nil {
 		panic(common.ErrTrace(err))
 	}
 
-	cvs, err := cvsRepositories.GetUsersCVS(p,uid)
+	return cvsRepositories.GetUsersCVS(p,req.Uid)
+}
 
-	if err != nil {
-		panic(common.ErrTrace(err))
-	}
-
-	jsonResponseOK(w, &cvs)
+type ReSetCVTempRequest struct{
+	Cvtid string `qval:"cvtid,inpath"`
+	Cvid string	`qval:"cvid,inpath"`
+	Uid string	`qval:"uid,inquery"`
 }
 
 //修改简历模板
-func ReSetCVTemp(w http.ResponseWriter, r *http.Request) {
+func ReSetCVTemp(req ReSetCVTempRequest, r *http.Request) error {
 // swagger:operation PUT /cvs/{cvid}/cvms/cvt/{cvtid} cvs ReSetCVTemp
 //
 //修改简历模板
@@ -128,39 +118,31 @@ func ReSetCVTemp(w http.ResponseWriter, r *http.Request) {
 //   '500':
 //     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	vars := mux.Vars(r)
-	cvtid := vars["cvtid"]
-	cvid := vars["cvid"]
-	uid := ParseQueryGet(r,"uid")
-	uid = strings.TrimSpace(uid)
 
 	//判断是否为当前用户操作
 	ut := context.Get(r,CURRENT_USER).(*common.UserToken)
-	if ut.Id != uid {
+	if ut.Id != req.Uid {
 		panic(common.ErrForbidden("You can create cv only for youself..."))
 	}
 
 	//判断模板是否存在
-	if ok,err := cvtsRepository.IsExist(cvtid);err != nil {
+	if ok,err := cvtsRepository.IsExist(req.Cvtid);err != nil {
 		panic(common.ErrTrace(err))
 	}else if !ok {
 		panic(common.ErrBadRequest("the path param cvtid:[%s] is not exist..."))
 	}
 
-	err := cvsRepositories.ReSetCVTemp(uid,cvid,cvtid)
-
-	if err!=nil {
-		panic(common.ErrTrace(err))
-	}
-
-	rm := make(map[string]interface{})
-	rm["rsp_msg"] = "ok"
-	jsonResponseOK(w, &rm)
+	return cvsRepositories.ReSetCVTemp(req.Uid,req.Cvid,req.Cvtid)
 
 }
 
+type CreateCVWithTempRequest struct{
+	Cvtid string `qval:"cvtid,inpath"`
+	Uid string	`qval:"uid,inquery"`
+}
+
 //新增简历
-func CreateCVWithTemp(w http.ResponseWriter, r *http.Request) {
+func CreateCVWithTemp(req CreateCVWithTempRequest, r *http.Request) (string ,error) {
 // swagger:operation POST /cvs/cvms/cvt/{cvtid} cvs CreateCVWithTemp
 //
 //新增简历
@@ -195,33 +177,21 @@ func CreateCVWithTemp(w http.ResponseWriter, r *http.Request) {
 //   '500':
 //     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	vars := mux.Vars(r)
-	cvtid := vars["cvtid"]
-	uid := ParseQueryGet(r,"uid")
-	uid = strings.TrimSpace(uid)
 
 	//判断是否为当前用户操作
 	ut := context.Get(r,CURRENT_USER).(*common.UserToken)
-	if ut.Id != uid {
+	if ut.Id != req.Uid {
 		panic(common.ErrForbidden("You can create cv only for youself..."))
 	}
 
 	//判断模板是否存在
-	if ok,err := cvtsRepository.IsExist(cvtid);err != nil {
+	if ok,err := cvtsRepository.IsExist(req.Cvtid);err != nil {
 		panic(common.ErrTrace(err))
 	}else if !ok {
 		panic(common.ErrBadRequest("the path param cvtid:[%s] is not exist..."))
 	}
 
-	cvid ,err := cvsRepositories.CreateCVWithTemp(uid,cvtid)
-	
-	if err!=nil {
-		panic(common.ErrTrace(err))
-	}
-
-	rm := make(map[string]interface{})
-	rm["cvid"] = cvid
-	jsonResponseOK(w, &rm)
+	return cvsRepositories.CreateCVWithTemp(req.Uid,req.Cvtid)
 }
 
 /*

@@ -30,6 +30,6 @@ func JsonResponse(w http.ResponseWriter, httpStatus int, m interface{}) {
 	w.Header().Set("Content-Type", "application/json;   charset=UTF-8")
 	w.WriteHeader(httpStatus)
 	if err := json.NewEncoder(w).Encode(m); err != nil {
-		panic(err)
+		panic(ErrInternalServerf("Json Response Error..."))
 	}
 }

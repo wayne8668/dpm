@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-func LoadCfg(){
+func LoadCfg() {
 
 	filePath, err := filepath.Abs(vars.APP_CFG_PATH)
 
@@ -24,7 +24,7 @@ func LoadCfg(){
 	}
 }
 
-func LoadCypherCfg(){
+func LoadCypherCfg() {
 
 	filePath, err := filepath.Abs(vars.CYPHER_PATH)
 
@@ -39,7 +39,7 @@ func LoadCypherCfg(){
 	}
 }
 
-func init(){
+func init() {
 
 	LoadCfg()
 
@@ -47,7 +47,7 @@ func init(){
 }
 
 func main() {
-	
+
 	router := routers.NewRouter()
 	httpPort := vars.Cfg.Get("server.http_port").(string)
 
