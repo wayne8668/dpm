@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	FILE_PATH  = "e:/dpm_log.log"
 	LOG_FORMAT = `%{color}%{time:0102 15:04:05.999999} %{longfile} %{longfunc} > %{level:.4s} %{id:03x}%{color:reset} %{message}`
 )
 
 var (
+	filePath = vars.Cfg.Get("logger.file_path").(string)
+
 	Logger = logging.MustGetLogger(vars.PROJECT_NAME)
 	format = logging.MustStringFormatter(LOG_FORMAT)
 )
@@ -26,7 +27,7 @@ func (p Password) Redacted() interface{} {
 }
 
 func init() {
-	logFile, err := os.OpenFile(FILE_PATH, os.O_WRONLY, 0666)
+	logFile, err := os.OpenFile(filePath, os.O_WRONLY, 0666)
 	if err != nil {
 		fmt.Println(err)
 	}

@@ -5,12 +5,11 @@ import (
 )
 
 const (
-	connStr = "bolt://neo4j:xhtian@localhost:7687"
+	connStr = "bolt://neo4j:xhtian@127.0.0.1:7687"
 )
 
 var (
 	pool    bolt.ClosableDriverPool
-	baseRep = &BaseRepository{}
 )
 
 func init() {

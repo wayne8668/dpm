@@ -2,8 +2,6 @@ package common
 
 import (
 	"net/http"
-	// "dpm/models"
-	// "github.com/juju/errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gorilla/context"
@@ -82,7 +80,7 @@ func ValidateTokenHandlerFunc(inner http.Handler, routeName string) http.Handler
 			// fmt.Fprintln(w, "Welcome,", token.Claims.(*UserClaims).Name)
 			u := token.Claims.(*UserClaims).UserToken
 			context.Set(r, CURRENT_USER, u)
-			// a := context.Get(r,"cusr").(*UserToken)
+			// Got the value like this : context.Get(r,"cusr").(*UserToken)
 			Logger.Infof("username is:[%s],and pwd is:[%s]", u.Name, "*********")
 		}
 

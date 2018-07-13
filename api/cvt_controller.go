@@ -1,12 +1,9 @@
 package api
 
 import (
-	"strconv"
 	"dpm/common"
-	// "fmt"
 	"dpm/models"
 	"dpm/repositories"
-	"net/http"
 )
 
 var (
@@ -101,76 +98,10 @@ func UpdateCVT(req UpdateCVTRequest) error {
 	return cvtsRepository.UpdateCVTemplate(req.CVT)
 }
 
-
 /*
 * 返回所有模板-分页
  */
- func GetAllCVTS(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /cvts cvts GetAllCVTS
-	//
-	//返回所有模板-分页
-	//
-	// Return All Users
-	//
-	// ---
-	// Consumes:
-	// - application/json
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: limit
-	//   in: query
-	//   description: per page limit
-	//   required: true
-	// - name: page
-	//   in: query
-	//   description: page number
-	//   required: true
-	// responses:
-	//   '200':
-	//     description: "返回模板分页列表"
-	//     schema:
-	//       "$ref": "#/definitions/Pageable"
-	//   '400':
-	//     description: "{\"rsp_msg\":errro msg} - Bad Request Error"
-	//   '401':
-	//     description: "{\"rsp_msg\":errro msg} - Unauthorized Error"
-	//   '500':
-	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
-
-	// vars := mux.SetURLVars(r)
-	// vars := r.URL.Query()
-	ls := ParseQueryGet(r,"limit")
-	pgs := ParseQueryGet(r,"page")
-	Logger.Infof("ls:[%s];pgs:[%s]", ls,pgs)
-
-	
-	l, _ := strconv.ParseInt(ls, 10, 64)
-	pg, _ := strconv.ParseInt(pgs, 10, 64)
-
-	Logger.Info("==================", l, pg)
-
-	p, err := common.NewPageable(l, pg)
-
-	if err != nil {
-		panic(common.ErrTrace(err))
-	}
-
-	pr, err := cvtsRepository.GetAllCVTS(p)
-
-	if err != nil {
-		panic(common.ErrTrace(err))
-	}
-
-	jsonResponseOK(w, &pr)
-}
-//////////////////////////////////////////////////////////////////
-
-
-/*
-* 返回所有模板-分页
- */
- func NewGetAllCVTS(req PageableRequest) common.Pageable {
+ func GetAllCVTS(req PageableRequest) common.Pageable {
 	// swagger:operation GET /cvts cvts GetAllCVTS
 	//
 	//返回所有模板-分页

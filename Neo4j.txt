@@ -1,3 +1,7 @@
+进入neo4j提供的可视化界面
+
+输入： :server change-password
+
 返回所有节点
 
 match (n) return n

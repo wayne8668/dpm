@@ -3,7 +3,6 @@ package api
 import (
 	"github.com/gorilla/context"
 	"dpm/common"
-	"dpm/models"
 	"dpm/repositories"
 	"net/http"
 	// "github.com/goinggo/mapstructure"
@@ -12,11 +11,6 @@ import (
 var (
 	cvsRepositories = repositories.NewCVSRepository()
 )
-
-type PageableRequest struct{
-	Limit int64 `qval:"limit,inquery"`
-	Page int64	`qval:"page,inquery"`
-}
 
 type GetUsersCVSRequest struct{
 	PageableRequest	`qval:"+"`
@@ -198,8 +192,5 @@ func CreateCVWithTemp(req CreateCVWithTempRequest, r *http.Request) (string ,err
 * 创建简历首页
  */
 func CreateCVIndex(w http.ResponseWriter, r *http.Request) {
-	// cv := models.NewCurriculumVitae()
-	rm := make(map[string]interface{})
-	rm["cv"] = models.NewCurriculumVitae()
-	jsonResponse(w, http.StatusOK, rm)
+
 }

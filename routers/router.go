@@ -42,7 +42,6 @@ func NewRouter() *mux.Router {
 			handler := common.ValidateTokenHandlerFunc(HttpHandlerWrap(route), route.Name)
 			handler = common.AppErrorHandlerFunc(handler)
 			handler = CORSAllowMiddleware(route.Methods, handler)
-			// handler = RouteLogMiddleware(handler, route.Name)
 			muxRouter.Path(route.Pattern).Name(route.Name).Handler(handler).Methods(route.Methods...)
 		}
 	}

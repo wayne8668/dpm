@@ -19,8 +19,6 @@ const (
 	IN_BODY  = "inbody"
 )
 
-var ()
-
 func ParseQueryGet(r *http.Request, key string) string {
 	vs, err := url.ParseQuery(r.URL.RawQuery)
 	if err == nil && len(vs[key]) > 0 {
@@ -39,42 +37,38 @@ func HttpHandlerWrap(r Route) http.HandlerFunc {
 		ft := reflect.TypeOf(r.HandlerFunc)
 
 		fmt.Println(fv, ft)
-		//返回函数输入参数的总数
+		//Got the number of In params
 		numIn := ft.NumIn()
 
 		in := make([]reflect.Value, numIn)
 
-		//迭代每一个参数
+		//for each the In param
 		for i := 0; i < numIn; i++ {
-			fmt.Println("=====================================", reflect.TypeOf(w).Elem())
-			//获取参数类型
+			//Got the In param's Type
 			fit := ft.In(i)
-			fmt.Println(fit)
-			var v reflect.Value
 			if fit.Kind() == reflect.Interface {
-				if reflect.TypeOf(w).Implements(fit) {
+				if reflect.TypeOf(w).Implements(fit) { // is http.ResponseWriter
 					in[i] = reflect.ValueOf(w)
 					continue
 				}
 			}
 
-			if fit == reflect.TypeOf(req) {
+			if fit == reflect.TypeOf(req) { // is http.Request
 				in[i] = reflect.ValueOf(req)
 				continue
 			}
 
-			if fit.Kind() == reflect.Struct {
-				v = structEvaluate(fit, w, req)
+			if fit.Kind() != reflect.Struct { 
+				// It'll panic a error when the param is not the struct type
+				panic(common.ErrInternalServerS(`the request params mapping support "struct" type only...`))
 			}
 
-			fmt.Println(v)
-			in[i] = v
+			in[i] = structEvaluate(fit, w, req)
 			_, err := govalidator.ValidateStruct(in[i].Interface())
 			if err != nil {
 				panic(common.ErrTrace(err))
 			}
 		}
-		fmt.Println(len(in))
 		out := fv.Call(in)
 		common.Logger.Infof("%s\t%s\t%s\t%s", req.Method, req.RequestURI, r.Name, time.Since(start))
 		reponseOut(w, out)
@@ -103,14 +97,26 @@ func reponseOut(w http.ResponseWriter, outs []reflect.Value) {
 		}
 	} else {
 		outSli := make([]interface{}, len(outs))
+		countSli := 0
 		for idx, item := range outs {
 			itemInf := item.Interface()
 			if yes, err := isErr(itemInf); yes {
 				panic(common.ErrTrace(err))
 			}
+			if itemInf == nil {
+				continue
+			}
 			outSli[idx] = itemInf
+			countSli++
 		}
-		common.JsonResponseOK(w, &outSli)
+		switch countSli {
+		case 0:
+			common.JsonResponseMsg(w, http.StatusOK, "ok")
+		case 1:
+			common.JsonResponseOK(w, &outSli[0])
+		default:
+			common.JsonResponseOK(w, &outSli)
+		}
 	}
 }
 

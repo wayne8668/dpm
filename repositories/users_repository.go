@@ -18,13 +18,6 @@ func NewUsersRepository() *UsersRepository {
 	return ur
 }
 
-func checkErr(err error) error {
-	if err != nil {
-
-	}
-	return nil
-}
-
 //返回用户信息
 func (this *UsersRepository) GetUserForAuth(u models.User) (udb *models.User, err error) {
 
