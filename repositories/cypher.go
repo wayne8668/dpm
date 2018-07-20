@@ -1,9 +1,9 @@
 package repositories
 
 import (
-	"io"
 	"dpm/vars"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
+	"io"
 )
 
 type Cypher struct {
@@ -12,10 +12,10 @@ type Cypher struct {
 }
 
 func NewCypher(key string) Cypher {
-	Logger.Infof("load cypher.ini key:[%s]",key)
+	Logger.Infof("load cypher.ini key:[%s]", key)
 	return Cypher{
 		// cypStr :strings.Replace(vars.CypherCfg.Get(key).(string),"\n", "", -1),
-		cypStr :vars.CypherCfg.Get(key).(string),
+		cypStr: vars.CypherCfg.Get(key).(string),
 	}
 }
 
@@ -47,15 +47,12 @@ func DoExecNeo(callback func(bolt.Conn) error) error {
 		}
 	}()
 
-	err = callback(conn)
-
-	if err != nil {
+	if err = callback(conn) ;err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	tx.Commit()
-	return err
+	return tx.Commit()
 }
 
 func ExecNeo(cyphers ...Cypher) error {
@@ -73,29 +70,29 @@ func ExecNeo(cyphers ...Cypher) error {
 		// 	}
 		// 	_, err = stmt.ExecNeo(cypher.params)
 		// } else {
-			queries := make([]string, len(cyphers))
-			params := make([]map[string]interface{}, len(cyphers))
+		queries := make([]string, len(cyphers))
+		params := make([]map[string]interface{}, len(cyphers))
 
-			for idx, cypher := range cyphers {
-				queries[idx] = cypher.cypStr
-				params[idx] = cypher.params
-				Logger.Infof("Cypher string is: [%s]", cypher.cypStr)
-				Logger.Info("Cypher params is: ", cypher.params)
-			}
+		for idx, cypher := range cyphers {
+			queries[idx] = cypher.cypStr
+			params[idx] = cypher.params
+			Logger.Infof("Cypher string is: [%s]", cypher.cypStr)
+			Logger.Info("Cypher params is: ", cypher.params)
+		}
 
-			pstmt, err := conn.PreparePipeline(queries...)
-			defer pstmt.Close()
+		pstmt, err := conn.PreparePipeline(queries...)
+		defer pstmt.Close()
 
-			if err != nil {
-				return err
-			}
-			_, err = pstmt.ExecPipeline(params...)
+		if err != nil {
+			return err
+		}
+		_, err = pstmt.ExecPipeline(params...)
 		// }
 		return err
 	})
 }
 
-func QueryNeo(callback func([]interface{}), cypher Cypher) error {
+func QueryNeo(rowCallBack func([]interface{}), cypher Cypher) error {
 	return DoExecNeo(func(conn bolt.Conn) error {
 
 		cypherStr := cypher.cypStr
@@ -124,7 +121,7 @@ func QueryNeo(callback func([]interface{}), cypher Cypher) error {
 				}
 				return err
 			}
-			callback(row)
+			rowCallBack(row)
 		}
 	})
 }

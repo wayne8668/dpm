@@ -9,7 +9,7 @@ const (
 )
 
 var (
-	pool    bolt.ClosableDriverPool
+	pool bolt.ClosableDriverPool
 )
 
 func init() {

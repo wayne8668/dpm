@@ -14,7 +14,7 @@ var (
 )
 
 //用户登录
-func Loggin(u models.User) map[string]interface{} {
+func Loggin(u models.User) (m RspModel, err error) {
 
 	// swagger:operation POST /users/login users Loggin
 	//
@@ -42,25 +42,23 @@ func Loggin(u models.User) map[string]interface{} {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	if udb, err := usersRepository.GetUserForAuth(u); err != nil {
-		panic(common.ErrTrace(err))
+	if u, err := usersRepository.GetUserForAuth(u); err != nil {
+		return m, common.ErrTrace(err)
 	} else {
-		if udb == nil {
-			panic(common.ErrForbidden("user name or pwd err."))
+		if u.UId == "" {
+			return m, common.ErrForbidden("user name or pwd err.")
 		}
 
 		ut := &common.UserToken{
 			Name: u.Name,
 			Pwd:  u.Pwd,
-			Id:   udb.UId,
+			Id:   u.UId,
 		}
 		if token, err := common.CreateToken(ut); err != nil {
-			panic(common.ErrTrace(err))
+			return m, common.ErrTrace(err)
 		} else {
-			m := make(map[string]interface{})
-			m[common.TOKEN_KEY] = token
-			m["auth_user"] = udb
-			return m
+			return m.AddAttribute(common.TOKEN_KEY, token).
+				AddAttribute("auth_user", u), nil
 		}
 	}
 }
@@ -100,7 +98,7 @@ func CreateUser(u models.User) error {
 }
 
 //用户注册
-func RegisterUser(u models.User) {
+func RegisterUser(u models.User) error {
 	// swagger:operation POST /users/register users RegisterUser
 	//
 	////用户注册
@@ -127,13 +125,13 @@ func RegisterUser(u models.User) {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-	CreateUser(u)
+	return CreateUser(u)
 }
 
 /*
 * 返回用户列表
  */
-func GetAllUsers(req PageableRequest) (common.Pageable,error) {
+func GetAllUsers(req PageableRequest) (p common.Pageable, err error) {
 	// swagger:operation GET /users users GetAllUsers
 	//
 	//返回用户列表
@@ -166,11 +164,8 @@ func GetAllUsers(req PageableRequest) (common.Pageable,error) {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-
-	p, err := common.NewPageable(req.Limit, req.Page)
-
-	if err != nil {
-		panic(common.ErrTrace(err))
+	if p, err = common.NewPageable(req.Limit, req.Page); err != nil {
+		return p, common.ErrTrace(err)
 	}
 
 	return usersRepository.GetAllUsers(p)

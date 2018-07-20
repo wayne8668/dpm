@@ -10,8 +10,8 @@ var (
 	cvtsRepository = repositories.NewCVTRepository()
 )
 
-type CreateCVTRequest struct{
-	CVT models.CVTemplate	`qval:"inbody"`
+type CreateCVTRequest struct {
+	CVT models.CVTemplate `qval:"inbody"`
 }
 
 //新增模板
@@ -51,9 +51,9 @@ func CreateCVT(req CreateCVTRequest) error {
 	return cvtsRepository.CreateNewCVTemplate(req.CVT)
 }
 
-type UpdateCVTRequest struct{
-	Id string	`qval:"id,inpath"`
-	CVT models.CVTemplate	`qval:"inbody"`
+type UpdateCVTRequest struct {
+	Id  string            `qval:"id,inpath"`
+	CVT models.CVTemplate `qval:"inbody"`
 }
 
 //修改模板
@@ -93,7 +93,6 @@ func UpdateCVT(req UpdateCVTRequest) error {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-
 	req.CVT.CVTId = req.Id
 	return cvtsRepository.UpdateCVTemplate(req.CVT)
 }
@@ -101,7 +100,7 @@ func UpdateCVT(req UpdateCVTRequest) error {
 /*
 * 返回所有模板-分页
  */
- func GetAllCVTS(req PageableRequest) common.Pageable {
+func GetAllCVTS(req PageableRequest) (p common.Pageable, err error) {
 	// swagger:operation GET /cvts cvts GetAllCVTS
 	//
 	//返回所有模板-分页
@@ -134,18 +133,9 @@ func UpdateCVT(req UpdateCVTRequest) error {
 	//   '500':
 	//     description: "{\"rsp_msg\":errro msg} - Internal Server Error"
 
-
-	p, err := common.NewPageable(10, req.Page)
-
-	if err != nil {
-		panic(common.ErrTrace(err))
+	if p, err = common.NewPageable(10, req.Page); err != nil {
+		return p, common.ErrTrace(err)
 	}
 
-	pr, err := cvtsRepository.GetAllCVTS(p)
-
-	if err != nil {
-		panic(common.ErrTrace(err))
-	}
-
-	return pr
+	return cvtsRepository.GetAllCVTS(p)
 }

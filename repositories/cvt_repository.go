@@ -43,7 +43,7 @@ func (this *cvtRepository) IsExist(cvtid string) (bool, error) {
 }
 
 //新增简历模板
-func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) error {
+func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) (err error) {
 
 	now := time.Now().UnixNano()
 
@@ -62,7 +62,7 @@ func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) error {
 
 	c := NewCypher("cvt_reposity.create_new_cvt.cypher").Params(params)
 
-	err := ExecNeo(c)
+	err = ExecNeo(c)
 
 	if err := common.ErrInternalServer(err); err != nil {
 		return err
@@ -72,7 +72,7 @@ func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) error {
 }
 
 //修改简历模板
-func (this *cvtRepository) UpdateCVTemplate(md models.CVTemplate) error {
+func (this *cvtRepository) UpdateCVTemplate(md models.CVTemplate) (err error) {
 
 	now := time.Now().UnixNano()
 
@@ -90,7 +90,7 @@ func (this *cvtRepository) UpdateCVTemplate(md models.CVTemplate) error {
 
 	c := NewCypher("cvt_reposity.update_new_cvt.cypher").Params(params)
 
-	err := ExecNeo(c)
+	err = ExecNeo(c)
 
 	if err := common.ErrInternalServer(err); err != nil {
 		return err
@@ -98,7 +98,7 @@ func (this *cvtRepository) UpdateCVTemplate(md models.CVTemplate) error {
 	return nil
 }
 
-func (this *cvtRepository) GetAllCVTS(p common.Pageable) (common.Pageable, error) {
+func (this *cvtRepository) GetAllCVTS(p common.Pageable) (_ common.Pageable, err error) {
 
 	c := NewCypher("cvt_reposity.get_all_cvts.cypher_count")
 
@@ -108,7 +108,7 @@ func (this *cvtRepository) GetAllCVTS(p common.Pageable) (common.Pageable, error
 		count = common.NilParseInt64(row[0])
 	}
 
-	err := QueryNeo(callback, c)
+	err = QueryNeo(callback, c)
 
 	if err := common.ErrInternalServer(err); err != nil {
 		return p, err

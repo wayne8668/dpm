@@ -19,7 +19,7 @@ func NewUsersRepository() *UsersRepository {
 }
 
 //返回用户信息
-func (this *UsersRepository) GetUserForAuth(u models.User) (udb *models.User, err error) {
+func (this *UsersRepository) GetUserForAuth(u models.User) (udb models.User, err error) {
 
 	params := make(map[string]interface{})
 	params["name"] = u.Name
@@ -28,19 +28,14 @@ func (this *UsersRepository) GetUserForAuth(u models.User) (udb *models.User, er
 	c := NewCypher("users_repository.get_user_for_auth.cypher").Params(params)
 
 	callback := func(row []interface{}) {
-		udb = &models.User{
+		udb = models.User{
 			UId:  common.NilParseString(row[0]),
 			Name: common.NilParseString(row[1]),
 			Pwd:  common.NilParseString(row[2]),
 		}
 	}
 
-	err = QueryNeo(callback, c)
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return nil, err
-	}
-	return udb, err
+	return udb, QueryNeo(callback, c)
 }
 
 //用户是否存在
@@ -80,8 +75,7 @@ func (this *UsersRepository) CreateUser(u models.User) error {
 	}
 
 	if isExist {
-		err = common.ErrForbiddenf("user name [%s] is exist..", u.Name)
-		return err
+		return common.ErrForbiddenf("user name [%s] is exist..", u.Name)
 	}
 
 	m := map[string]interface{}{
@@ -93,17 +87,11 @@ func (this *UsersRepository) CreateUser(u models.User) error {
 
 	c := NewCypher("users_repository.create_user.cypher").Params(m)
 
-	err = ExecNeo(c)
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return err
-	}
-
-	return nil
+	return ExecNeo(c)
 }
 
 //返回所有用户
-func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, error) {
+func (this *UsersRepository) GetAllUsers(p common.Pageable) (_ common.Pageable,err error) {
 
 	c := NewCypher("users_repository.get_all_users.cypher_count")
 
@@ -113,7 +101,7 @@ func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, er
 		count = common.NilParseInt64(row[0])
 	}
 
-	err := QueryNeo(callback, c)
+	err = QueryNeo(callback, c)
 
 	if err := common.ErrInternalServer(err); err != nil {
 		return p, err
@@ -141,11 +129,5 @@ func (this *UsersRepository) GetAllUsers(p common.Pageable) (common.Pageable, er
 		p.AddContent(m)
 	}
 
-	err = QueryNeo(callback, c)
-
-	if err := common.ErrInternalServer(err); err != nil {
-		return p, err
-	}
-
-	return p, nil
+	return p, QueryNeo(callback, c)
 }

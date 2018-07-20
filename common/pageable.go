@@ -32,8 +32,7 @@ type Pageable struct {
 func NewPageable(pageSize int64, pageNumber int64) (p Pageable, err error) {
 
 	if pageSize == 0 {
-		err = ErrBadRequestf("Bad Request Args:[pageSize],the value is:[%d]", pageSize)
-		return p, err
+		return p, ErrBadRequestf("Bad Request Args:[pageSize],the value is:[%d]", pageSize)
 	}
 
 	p = Pageable{

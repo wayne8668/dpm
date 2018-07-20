@@ -18,7 +18,7 @@ func NewCVSRepository() *cvsRepository {
 }
 
 //设置简历模板
-func (this *cvsRepository) ReSetCVTemp(uid string, cvid string, cvtid string) error {
+func (this *cvsRepository) ReSetCVTemp(uid string, cvid string, cvtid string) (err error) {
 
 	params := make(map[string]interface{})
 	params["uid"] = uid
@@ -27,7 +27,7 @@ func (this *cvsRepository) ReSetCVTemp(uid string, cvid string, cvtid string) er
 
 	c := NewCypher("cvs_reposity.reset_cvtemp.cypher").Params(params)
 
-	err := ExecNeo(c)
+	err = ExecNeo(c)
 
 	if err := common.ErrInternalServer(err); err != nil {
 		return err
@@ -62,7 +62,7 @@ func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (cvid stri
 }
 
 //返回用户的所有简历
-func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pageable, error) {
+func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (_ common.Pageable, err error) {
 
 	params := make(map[string]interface{})
 	params["uid"] = uid
@@ -71,7 +71,7 @@ func (this *cvsRepository) GetUsersCVS(p common.Pageable, uid string) (common.Pa
 
 	c := NewCypher("cvs_reposity.get_users_cvs.cypher_count").Params(params)
 
-	err := QueryNeo(func(row []interface{}) {
+	err = QueryNeo(func(row []interface{}) {
 		count = common.NilParseInt64(row[0])
 	}, c)
 

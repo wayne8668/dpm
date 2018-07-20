@@ -36,7 +36,6 @@ func HttpHandlerWrap(r Route) http.HandlerFunc {
 		fv := reflect.ValueOf(r.HandlerFunc)
 		ft := reflect.TypeOf(r.HandlerFunc)
 
-		fmt.Println(fv, ft)
 		//Got the number of In params
 		numIn := ft.NumIn()
 
@@ -52,7 +51,6 @@ func HttpHandlerWrap(r Route) http.HandlerFunc {
 					continue
 				}
 			}
-
 			if fit == reflect.TypeOf(req) { // is http.Request
 				in[i] = reflect.ValueOf(req)
 				continue
@@ -63,7 +61,7 @@ func HttpHandlerWrap(r Route) http.HandlerFunc {
 				panic(common.ErrInternalServerS(`the request params mapping support "struct" type only...`))
 			}
 
-			in[i] = structEvaluate(fit, w, req)
+			in[i] = structEvaluate(fit, req)
 			_, err := govalidator.ValidateStruct(in[i].Interface())
 			if err != nil {
 				panic(common.ErrTrace(err))
@@ -120,7 +118,7 @@ func reponseOut(w http.ResponseWriter, outs []reflect.Value) {
 	}
 }
 
-func structEvaluate(t reflect.Type, w http.ResponseWriter, req *http.Request) reflect.Value {
+func structEvaluate(t reflect.Type, req *http.Request) reflect.Value {
 	nt := reflect.New(t)
 	v := nt.Elem()
 	tnf := t.NumField()
@@ -148,7 +146,7 @@ func structEvaluate(t reflect.Type, w http.ResponseWriter, req *http.Request) re
 		case 0:
 			panic(common.ErrInternalServerf(`
 				the "%s" tag's element value in ["%s\t%s\t%s\t%s\t"] at least one. `,
-				"rval", IN_PATH, IN_QUERY, IN_BODY, "+", "-"))
+				"qval", IN_PATH, IN_QUERY, IN_BODY, "+", "-"))
 		case 1:
 			eleFst := tagElems[0]
 			switch eleFst {
@@ -158,17 +156,21 @@ func structEvaluate(t reflect.Type, w http.ResponseWriter, req *http.Request) re
 				if tftk != reflect.Struct {
 					panic(common.ErrInternalServerf(`
 						the "%s" tag's element [%s] support struct filed only. `,
-						"rval", "+"))
+						"qval", "+"))
 				}
-				tfv = structEvaluate(tft, w, req)
+				tfv = structEvaluate(tft, req)
 			case IN_BODY:
 				if tftk != reflect.Struct {
 					panic(common.ErrInternalServerf(`
 						the "%s" tag's element [%s] support struct filed only. `,
-						"rval", IN_BODY))
+						"qval", IN_BODY))
 				}
 				o := reflect.New(tft).Interface()
-				common.Unmarshal2Object(w, req, &o)
+				if err := common.Unmarshal2Object(req, &o); err!= nil {
+					panic(common.ErrBadRequestf(`
+						the "%s" tag's element [%s] parse params in body err,please check the request json. `,
+						"qval", IN_BODY))
+				}
 				tfv = reflect.ValueOf(o).Elem()
 			}
 		case 2:
@@ -215,7 +217,7 @@ func structEvaluate(t reflect.Type, w http.ResponseWriter, req *http.Request) re
 
 	if noTagStruct {
 		o := nt.Interface()
-		common.Unmarshal2Object(w, req, &o)
+		common.Unmarshal2Object(req, &o)
 		v = reflect.ValueOf(o).Elem()
 	}
 
