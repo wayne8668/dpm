@@ -10,8 +10,8 @@ import (
 //
 // swagger:model User
 type User struct {
-	UId         string          `json:"uid"`
-	Name       string          `json:"name"`
-	Pwd        string          `json:"pwd"`
+	UId        string          `json:"uid"`
+	Name       string          `json:"name" binding:"required"`
+	Pwd        string          `json:"pwd" binding:"required"`
 	CreateTime common.JSONTime `json:"create_time"`
 }

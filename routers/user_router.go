@@ -2,6 +2,7 @@ package routers
 
 import (
 	"dpm/api"
+	"dpm/common"
 )
 
 var (
@@ -9,26 +10,26 @@ var (
 		Route{
 			Name:        "users_all_page",
 			Methods:     []string{"GET"},
-			Pattern:     prefixion + "/users",
-			HandlerFunc: api.GetAllUsers,
+			Pattern:     "/users",
+			HandlerFunc: common.HttpFuncWrap(api.GetAllUsers),
 		},
 		Route{
 			Name:        "users_create",
-			Methods:     []string{"POST", "OPTIONS"},
-			Pattern:     prefixion + "/users",
-			HandlerFunc: api.CreateUser,
+			Methods:     []string{"POST"},
+			Pattern:     "/users",
+			HandlerFunc: common.HttpFuncWrap(api.CreateUser),
 		},
 		Route{
 			Name:        "users_login",
-			Methods:     []string{"POST", "OPTIONS"},
-			Pattern:     prefixion + "/users/login",
-			HandlerFunc: api.Loggin,
+			Methods:     []string{"POST"},
+			Pattern:     "/users/login",
+			HandlerFunc: common.HttpFuncWrap(api.Loggin),
 		},
 		Route{
 			Name:        "users_register",
-			Methods:     []string{"POST", "OPTIONS"},
-			Pattern:     prefixion + "/users/register",
-			HandlerFunc: api.RegisterUser,
+			Methods:     []string{"POST"},
+			Pattern:     "/users/register",
+			HandlerFunc: common.HttpFuncWrap(api.RegisterUser),
 		},
 	}
 )

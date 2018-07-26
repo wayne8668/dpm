@@ -91,7 +91,7 @@ func (this *UsersRepository) CreateUser(u models.User) error {
 }
 
 //返回所有用户
-func (this *UsersRepository) GetAllUsers(p common.Pageable) (_ common.Pageable,err error) {
+func (this *UsersRepository) GetAllUsers(p common.Pageable) (_ common.Pageable, err error) {
 
 	c := NewCypher("users_repository.get_all_users.cypher_count")
 

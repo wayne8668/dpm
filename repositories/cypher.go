@@ -47,7 +47,7 @@ func DoExecNeo(callback func(bolt.Conn) error) error {
 		}
 	}()
 
-	if err = callback(conn) ;err != nil {
+	if err = callback(conn); err != nil {
 		tx.Rollback()
 		return err
 	}

@@ -2,11 +2,12 @@ package api
 
 import (
 	"dpm/common"
+	"dpm/middleware"
 )
 
 var (
 	Logger       = common.Logger
-	CURRENT_USER = common.CURRENT_USER
+	CURRENT_USER = middleware.CURRENT_USER
 )
 
 const (
@@ -17,25 +18,6 @@ const (
 
 //PageableRequest
 type PageableRequest struct {
-	Limit int64 `qval:"limit,inquery"`
-	Page  int64 `qval:"page,inquery"`
+	Limit int64 `query:"limit" binding:"required,numeric"`
+	Page  int64 `query:"page" binding:"required,numeric"`
 }
-
-///////////////////////////////////////////////////////////////////////////////
-
-//RspModel
-type RspModel map[string]interface{}
-
-func NewRspModel() RspModel {
-	return make(map[string]interface{})
-}
-
-func (m RspModel) AddAttribute(k string, v interface{}) RspModel {
-	if m == nil {
-		m = make(map[string]interface{})
-	}
-	m[k] = v
-	return m
-}
-
-///////////////////////////////////////////////////////////////////////////////

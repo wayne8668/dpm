@@ -1,17 +1,21 @@
 package main
 
 import (
-	"dpm/common"
 	"dpm/routers"
 	"dpm/vars"
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	gin.SetMode(gin.DebugMode)
+	router := gin.New()
 
-	router := routers.NewRouter()
+	g := router.Group("/dpm/api/v1.0")
+
+	routers.RegisterMiddleWare(g)
+	routers.RegisterRouter(g)
+
 	httpPort := vars.Cfg.Get("server.http_port").(string)
 
-	common.Logger.Infof("Golang Server will started with port:[%s]", httpPort)
-	common.Logger.Fatal(http.ListenAndServe(httpPort, router))
+	router.Run(httpPort)
 }

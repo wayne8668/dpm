@@ -1,12 +1,13 @@
-package common
+package middleware
 
 import (
-	"net/http"
+	"dpm/common"
+	"dpm/vars"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
-	"github.com/gorilla/context"
+	"github.com/gin-gonic/gin"
+	"net/http"
 	"time"
-	"dpm/vars"
 )
 
 var (
@@ -15,8 +16,8 @@ var (
 	}
 
 	IgnoreValidateRoute = map[string]bool{
-		"users_register": true,
-		"users_login":    true,
+		"/dpm/api/v1.0/users/register": true,
+		"/dpm/api/v1.0/users/login":    true,
 	}
 )
 
@@ -59,31 +60,30 @@ func CreateToken(user *UserToken) (string, error) {
 	return t.SignedString([]byte(SecretMap[vars.PROJECT_NAME]))
 }
 
-func ValidateTokenHandlerFunc(inner http.Handler, routeName string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		if !IgnoreValidateRoute[routeName] {
+func ValidateTokenHandlerFunc() gin.HandlerFunc {
+	return func(cxt *gin.Context) {
+		if !IgnoreValidateRoute[cxt.Request.URL.Path] && cxt.Request.Method != "OPTIONS" {
 			// only accessible with a valid token
 			// Get token from request
-			token, err := request.ParseFromRequestWithClaims(r, request.AuthorizationHeaderExtractor, &UserClaims{},
+			token, err := request.ParseFromRequestWithClaims(cxt.Request, request.AuthorizationHeaderExtractor, &UserClaims{},
 				func(token *jwt.Token) (interface{}, error) {
 					return []byte(SecretMap[vars.PROJECT_NAME]), nil
 				})
-			Logger.Info("token:", token)
+			common.Logger.Info("token:", token)
 			// If the token is missing or invalid, return error
 			if err != nil {
-				error := ErrTraceCode(http.StatusUnauthorized, err)
+				error := common.ErrTraceCode(http.StatusUnauthorized, err)
 				panic(error)
 			}
 
 			// Token is valid
 			// fmt.Fprintln(w, "Welcome,", token.Claims.(*UserClaims).Name)
 			u := token.Claims.(*UserClaims).UserToken
-			context.Set(r, CURRENT_USER, u)
+			cxt.Set(CURRENT_USER, u)
 			// Got the value like this : context.Get(r,"cusr").(*UserToken)
-			Logger.Infof("username is:[%s],and pwd is:[%s]", u.Name, "*********")
+			common.Logger.Infof("username is:[%s],and pwd is:[%s]", u.Name, "*********")
 		}
 
-		inner.ServeHTTP(w, r)
-	})
+		cxt.Next()
+	}
 }

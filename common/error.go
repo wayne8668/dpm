@@ -10,6 +10,10 @@ type AppError struct {
 	HttpStatusCode int
 }
 
+func (ae *AppError) GetError() error {
+	return ae.error
+}
+
 func ErrInternalServer(err error) error {
 	if err == nil {
 		return nil
@@ -68,7 +72,6 @@ func ErrBadRequest(format string) error {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 func ErrAnnotatef(code int, other error, format string, args ...interface{}) error {
 	cause := other

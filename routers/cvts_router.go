@@ -2,27 +2,28 @@ package routers
 
 import (
 	"dpm/api"
+	"dpm/common"
 )
 
 var (
 	cvtRouter = ControllerRouter{
 		Route{
 			Name:        "cvts_create",
-			Methods:     []string{"POST", "OPTIONS"},
-			Pattern:     prefixion + "/cvts",
-			HandlerFunc: api.CreateCVT,
+			Methods:     []string{"POST"},
+			Pattern:     "/cvts",
+			HandlerFunc: common.HttpFuncWrap(api.CreateCVT),
 		},
 		Route{
 			Name:        "cvts_update",
-			Methods:     []string{"PUT", "OPTIONS"},
-			Pattern:     prefixion + "/cvts/{id}",
-			HandlerFunc: api.UpdateCVT,
+			Methods:     []string{"PUT"},
+			Pattern:     "/cvts/:id",
+			HandlerFunc: common.HttpFuncWrap(api.UpdateCVT),
 		},
 		Route{
 			Name:        "cvts_all_page",
-			Methods:     []string{"GET", "OPTIONS"},
-			Pattern:     prefixion + "/cvts",
-			HandlerFunc: api.GetAllCVTS,
+			Methods:     []string{"GET"},
+			Pattern:     "/cvts",
+			HandlerFunc: common.HttpFuncWrap(api.GetAllCVTS),
 		},
 	}
 )

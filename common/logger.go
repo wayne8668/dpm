@@ -13,8 +13,8 @@ const (
 
 var (
 	filePath = vars.Cfg.Get("logger.file_path").(string)
-	Logger = logging.MustGetLogger(vars.PROJECT_NAME)
-	format = logging.MustStringFormatter(LOG_FORMAT)
+	Logger   = logging.MustGetLogger(vars.PROJECT_NAME)
+	format   = logging.MustStringFormatter(LOG_FORMAT)
 )
 
 type (

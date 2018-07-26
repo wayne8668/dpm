@@ -1,11 +1,11 @@
 package common
 
 import (
+	"dpm/vars"
+	"encoding/json"
 	"io"
 	"io/ioutil"
-	"encoding/json"
 	"net/http"
-	"dpm/vars"
 )
 
 //反序列化http.Request.body至Object(传址)

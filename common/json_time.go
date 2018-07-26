@@ -27,7 +27,7 @@ func (this JSONTime) MarshalJSON() ([]byte, error) {
 }
 
 func UMInt2JSONTime(st int64) JSONTime {
-	return JSONTime(time.Unix(0,st))
+	return JSONTime(time.Unix(0, st))
 }
 
 func UMStr2JSONTime(st string) (JSONTime, error) {
