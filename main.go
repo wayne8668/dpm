@@ -1,12 +1,14 @@
 package main
 
 import (
+	"runtime"
 	"dpm/routers"
 	"dpm/vars"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU() * 2)
 	gin.SetMode(gin.DebugMode)
 	router := gin.New()
 

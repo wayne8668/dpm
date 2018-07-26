@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"dpm/common"
 	"dpm/middleware"
 	"dpm/repositories"
@@ -23,6 +24,13 @@ func GetUsersCVS(req *common.ApiRequest) (rsp common.ApiRsponse) {
 	var param GetUsersCVSRequest
 	if err := req.BindStruct(&param); err != nil {
 		return rsp.Error(common.ErrTrace(err))
+	}
+
+	//判断是否为当前用户操作
+	uti, _ := req.Get(CURRENT_USER)
+	ut := uti.(*middleware.UserToken)
+	if ut.Id != param.Uid {
+		return rsp.Error(common.ErrForbidden("You can create cv only for youself..."))
 	}
 
 	p, err := common.NewPageable(param.Limit, param.Page)
@@ -82,6 +90,7 @@ func CreateCVWithTemp(req *common.ApiRequest) (rsp common.ApiRsponse) {
 	//判断是否为当前用户操作
 	uti, _ := req.Get(CURRENT_USER)
 	ut := uti.(*middleware.UserToken)
+	fmt.Println(ut.Id,param.Uid)
 	if ut.Id != param.Uid {
 		return rsp.Error(common.ErrForbidden("You can create cv only for youself..."))
 	}

@@ -22,7 +22,9 @@ func Recovery() gin.HandlerFunc {
 					}
 					common.Logger.Error(errMsg)
 					debug.PrintStack()
-					cxt.JSON(httpCode, common.RspMsg(oe.Error()))
+					cxt.JSON(httpCode, map[string]string{
+						"rsp_msg": oe.Error(),
+					})
 				}
 			}
 		}()

@@ -79,7 +79,7 @@ func (this *UsersRepository) CreateUser(u models.User) error {
 	}
 
 	m := map[string]interface{}{
-		"uid":         NewUUID(),
+		"uid":         common.UUID(),
 		"name":        u.Name,
 		"pwd":         u.Pwd,
 		"create_time": time.Now().UnixNano(),

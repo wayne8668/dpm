@@ -20,22 +20,22 @@ func Loggin(req *common.ApiRequest) (rsp common.ApiRsponse) {
 	if err := req.BindJSON(&u); err != nil {
 		return rsp.Error(common.ErrTrace(err))
 	}
-	if u, err := usersRepository.GetUserForAuth(u); err != nil {
+	if udb, err := usersRepository.GetUserForAuth(u); err != nil {
 		return rsp.Error(common.ErrTrace(err))
 	} else {
-		if u.UId == "" {
+		if udb.UId == "" {
 			return rsp.Error(common.ErrForbidden("user name or pwd err."))
 		}
 
 		ut := &middleware.UserToken{
-			Name: u.Name,
-			Pwd:  u.Pwd,
-			Id:   u.UId,
+			Name: udb.Name,
+			Pwd:  udb.Pwd,
+			Id:   udb.UId,
 		}
 		if token, err := middleware.CreateToken(ut); err != nil {
 			return rsp.Error(common.ErrTrace(err))
 		} else {
-			return rsp.AddAttribute(middleware.TOKEN_KEY, token).AddAttribute("auth_user", u)
+			return rsp.AddAttribute(middleware.TOKEN_KEY, token).AddAttribute("auth_user", udb)
 		}
 	}
 }

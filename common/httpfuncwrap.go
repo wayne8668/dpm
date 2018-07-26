@@ -1,10 +1,10 @@
 package common
 
 import (
-	"fmt"
-	"strconv"
-	"regexp"
 	"errors"
+	"fmt"
+	"regexp"
+	"strconv"
 	// "github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -41,14 +41,16 @@ func HttpFuncWrap(f HttpApiFunc) gin.HandlerFunc {
 		}
 
 		rsp := f(req)
-		
+
 		//respon logic
 		if rsp.e != nil {
 			panic(ErrTrace(rsp.e))
 		} else if rsp.o != nil {
 			cxt.JSON(200, rsp.o)
+			// cxt.SecureJSON(200,rsp.o)
 		} else if rsp.m != nil {
 			cxt.JSON(200, rsp.m)
+			// cxt.SecureJSON(200,rsp.m)
 		} else {
 			cxt.JSON(200, map[string]string{
 				"rsp_msg": "ok",
@@ -169,7 +171,7 @@ func structFieldEvaluate(v reflect.Value, tf reflect.StructField, cxt *gin.Conte
 
 func validateField(tf reflect.StructField, kv string) error {
 	v8 := vgin.Engine().(*validator.Validate)
-	
+
 	if ok, tagItems := parseTagName(tf, "binding"); ok {
 		if err := v8.Field(kv, tagItems); err != nil {
 			return errors.New("expected:" + tagItems)

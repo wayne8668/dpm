@@ -48,7 +48,7 @@ func (this *cvtRepository) CreateNewCVTemplate(md models.CVTemplate) (err error)
 	now := time.Now().UnixNano()
 
 	params := make(map[string]interface{})
-	params["cvt_id"] = NewUUID()
+	params["cvt_id"] = common.UUID()
 	params["cvt_no"] = md.CVTNo
 	params["cvt_name"] = md.CVTName
 	params["cvt_fmt"] = md.CVTFmt

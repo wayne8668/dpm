@@ -42,7 +42,7 @@ func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (cvid stri
 	nowNano := time.Now().UnixNano()
 	nowFmt := now.Format("060102")
 
-	cvid = NewUUID()
+	cvid = common.UUID()
 
 	params := make(map[string]interface{})
 	params["uid"] = uid
@@ -56,7 +56,7 @@ func (this *cvsRepository) CreateCVWithTemp(uid string, cvtid string) (cvid stri
 
 	err = ExecNeo(c)
 	if err := common.ErrInternalServer(err); err != nil {
-		return "", err
+		return "",err
 	}
 	return cvid, nil
 }
