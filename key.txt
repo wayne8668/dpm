@@ -1,0 +1,33 @@
+ctrl + k 呼叫git
+ctrl + k 呼叫工作空间git
+ctrl + y 删除当前行
+ctrl + d 复制当前行
+ctrl + j 呼叫模板
+ctrl + . 折叠当前块
+ctrl + g 行列
+ctrl + r 当前文件中查找替换
+ctrl + shift + r 工作区所有文件中查找替换
+ctrl + f 当前文件中查找
+ctrl + shift + f 工作区所有文件中查找
+ctrl + e 最近的文件
+ctrl + shift + e 最近编辑的文件
+ctrl + b 查看哪里用过函数
+ctrl + n 查找类型
+ctrl + [ 去到块头
+ctrl + shift + [ 选中焦点到块头的部分
+ctrl + ] 去到块尾
+ctrl + shift + ] 选中焦点到块尾的部分
+ctrl + shift + u 大小写切换
+ctrl + shift + i 浮层查看函数源码
+alt + shift + insert 竖选模式切换
+
+shift + enter 当前行之后新增一行
+ctrl + alt + enter 当前行之前新增一行
+
+//模板
+: + ctrl + j 使用:=赋值
+err + ctrl + j 使用if err != nil 句块
+init 定义init函数
+main 定义main函数
+forr 使用for...range 句块
+for 太多了
