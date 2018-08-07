@@ -38,7 +38,7 @@ var (
 func CorsMW() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowAllOrigins:  false,
-		AllowOrigins:	  []string{"http://localhost:8082"},
+		AllowOrigins:     []string{"http://localhost:8082"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "OPTIONS", "DELETE", "HEAD"},
 		AllowHeaders:     []string{"authorization", "content-type"},
 		AllowCredentials: true,
