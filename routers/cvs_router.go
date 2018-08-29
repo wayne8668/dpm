@@ -1,12 +1,18 @@
 package routers
 
 import (
-	"dpm/common"
 	"dpm/api"
+	"dpm/common"
 )
 
 var (
 	cvRouter = ControllerRouter{
+		Route{
+			Name:        "cvs_create_cvm_bsinfo", //新增基本信息
+			Methods:     []string{"POST"},
+			Pattern:     "/cvs/:cvid/cvms/bsinfo",
+			HandlerFunc: common.HttpFuncWrap(api.CreateBasicInfoCVM),
+		},
 		Route{
 			Name:        "cvs_update_cvm_cvt", //修改简历模板
 			Methods:     []string{"PUT"},

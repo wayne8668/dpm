@@ -1,12 +1,13 @@
 package api
 
 import (
-	"fmt"
 	"dpm/common"
 	"dpm/middleware"
 	"dpm/repositories"
+	"fmt"
 	"net/http"
-	// "github.com/goinggo/mapstructure"
+
+	"dpm/models"
 )
 
 var (
@@ -90,7 +91,7 @@ func CreateCVWithTemp(req *common.ApiRequest) (rsp common.ApiRsponse) {
 	//判断是否为当前用户操作
 	uti, _ := req.Get(CURRENT_USER)
 	ut := uti.(*middleware.UserToken)
-	fmt.Println(ut.Id,param.Uid)
+	fmt.Println(ut.Id, param.Uid)
 	if ut.Id != param.Uid {
 		return rsp.Error(common.ErrForbidden("You can create cv only for youself..."))
 	}
@@ -103,7 +104,33 @@ func CreateCVWithTemp(req *common.ApiRequest) (rsp common.ApiRsponse) {
 	}
 
 	cvid, err := cvsRepositories.CreateCVWithTemp(param.Uid, param.Cvtid)
-	return rsp.Error(err).AddAttribute("cvid",cvid)
+	return rsp.Error(err).AddAttribute("cvid", cvid)
+}
+
+type CreateBasicInfoRequest struct {
+	Cvid      string              `path:"cvid" binding:"required"`
+	Uid       string              `query:"uid" binding:"required"`
+	BasicInfo models.BasicInfoCVM `struct:"+"`
+}
+
+//新增基本信息
+func CreateBasicInfoCVM(req *common.ApiRequest) (rsp common.ApiRsponse) {
+	var param CreateBasicInfoRequest
+	if err := req.BindStruct(&param); err != nil {
+		return rsp.Error(common.ErrTrace(err))
+	}
+	//判断是否为当前用户操作
+	uti, _ := req.Get(CURRENT_USER)
+	ut := uti.(*middleware.UserToken)
+	fmt.Println(ut.Id, param.Uid)
+	if ut.Id != param.Uid {
+		return rsp.Error(common.ErrForbidden("You can create cv only for youself..."))
+	}
+
+	//cvid, err := cvsRepositories.CreateCVWithTemp(param.Uid, param.Cvtid)
+	//todo 服务代码没写
+	return rsp.AddAttribute("cvid", "")
+
 }
 
 /*
